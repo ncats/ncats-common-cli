@@ -16,4 +16,8 @@ interface OptionVisitor {
     void preVisit(RadioGroup group);
 
     void postVisit(RadioGroup group);
+
+    void preVisit(GroupedOptionGroup group);
+
+    void postVisit(GroupedOptionGroup group);
 }

@@ -5,5 +5,11 @@ package gov.nih.ncats.common.cli;
  */
 public interface CliOption {
 
-    void visit(OptionVisitor visitor);
+    default void visit(OptionVisitor visitor){
+        visit(visitor, null);
+    }
+
+    void visit(OptionVisitor visitor, Boolean requiredOverride);
+
+    void setIsRequired(boolean b);
 }

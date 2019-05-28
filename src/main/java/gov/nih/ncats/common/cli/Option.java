@@ -74,7 +74,7 @@ public class Option implements CliOption{
     }
 
     @Override
-    public void visit(OptionVisitor visitor) {
+    public void visit(OptionVisitor visitor, Boolean forcedOverride) {
         visitor.visit(this);
     }
 
@@ -85,5 +85,10 @@ public class Option implements CliOption{
                                             .desc(description)
                                             .hasArg(!isFlag)
                                             .build();
+    }
+
+    @Override
+    public void setIsRequired(boolean b) {
+        this.isRequired = b;
     }
 }

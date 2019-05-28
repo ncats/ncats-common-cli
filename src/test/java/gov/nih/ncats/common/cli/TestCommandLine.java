@@ -121,6 +121,123 @@ public class TestCommandLine {
     }
 
     @Test
+    public void groupSomeRequiredSomeNot() throws IOException{
+        Example ex = new Example();
+        new CommandLine()
+                .addOptions( GroupedOptionGroup.requiredGroup(Option.required("foo")
+                                                                        .setToInt(ex::setA),
+                                                                Option.optional("bar")),
+                        Option.required("path")
+                                .setToFile(ex::setMyFile)
+
+
+                )
+
+                .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123"});
+
+        assertEquals(123, ex.getA());
+        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+    }
+
+    @Test
+    public void groupAllRequired() throws IOException{
+        Example ex = new Example();
+        new CommandLine()
+                .addOptions( GroupedOptionGroup.requiredGroup(Option.required("foo")
+                                .setToInt(ex::setA),
+                                                            Option.required("bar")),
+                        Option.required("path")
+                                .setToFile(ex::setMyFile)
+
+
+                )
+
+                .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123", "-bar", "lah"});
+
+        assertEquals(123, ex.getA());
+        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+    }
+
+    @Test(expected = ValidationError.class)
+    public void groupAllRequiredButNotAllInCommandLine() throws IOException{
+        Example ex = new Example();
+        new CommandLine()
+                .addOptions( GroupedOptionGroup.requiredGroup(Option.required("foo")
+                                .setToInt(ex::setA),
+                                                     Option.required("bar")),
+                        Option.required("path")
+                                .setToFile(ex::setMyFile)
+
+
+                )
+
+                .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123"});
+
+    }
+
+    @Test
+    public void nestedGroupsRadioGroupInsideGenericGroup() throws IOException{
+        Example ex = new Example();
+        new CommandLine()
+                .addOptions( GroupedOptionGroup.requiredGroup(Option.required("foo")
+                                .setToInt(ex::setA),
+                        RadioGroup.required(Option.required("bar"), Option.required("baz"))
+
+                        ),
+                        Option.required("path")
+                                .setToFile(ex::setMyFile)
+
+
+                )
+
+                .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123", "-bar", "stool"});
+
+        assertEquals(123, ex.getA());
+        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+    }
+
+    @Test
+    public void nestedGroupsOptionalRadioGroupInsideGenericGroup() throws IOException{
+        Example ex = new Example();
+        new CommandLine()
+                .addOptions( GroupedOptionGroup.requiredGroup(Option.required("foo")
+                                .setToInt(ex::setA),
+                        RadioGroup.optional(Option.required("bar"), Option.required("baz"))
+
+                        ),
+                        Option.required("path")
+                                .setToFile(ex::setMyFile)
+
+
+                )
+
+                .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123", "-bar", "stool"});
+
+        assertEquals(123, ex.getA());
+        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+    }
+
+    @Test
+    public void nestedGroupsOptionalAndMissingRadioGroupInsideGenericGroup() throws IOException{
+        Example ex = new Example();
+        new CommandLine()
+                .addOptions( GroupedOptionGroup.requiredGroup(Option.required("foo")
+                                .setToInt(ex::setA),
+                        RadioGroup.optional(Option.required("bar"), Option.required("baz"))
+
+                        ),
+                        Option.required("path")
+                                .setToFile(ex::setMyFile)
+
+
+                )
+
+                .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123"});
+
+        assertEquals(123, ex.getA());
+        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+    }
+    @Test
     public void requireRadioWithOtherOptions() throws IOException{
         Example ex = new Example();
         new CommandLine()
@@ -150,6 +267,51 @@ public class TestCommandLine {
 
         assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
     }
+
+
+    @Test(expected = ValidationError.class)
+    public void nestedGroupsGenericGroupInsideRadioMultiSelectFails() throws IOException{
+        Example ex = new Example();
+        new CommandLine()
+                .addOptions(RadioGroup.required(Option.required("bar"), Option.required("baz"),
+                        GroupedOptionGroup.requiredGroup(Option.required("foo")
+                                                                .setToInt(ex::setA),
+                                                            Option.optional("anotherFoo"))
+
+                        ),
+                        Option.required("path")
+                                .setToFile(ex::setMyFile)
+
+
+                )
+
+                .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123", "-bar", "stool"});
+
+        assertEquals(123, ex.getA());
+        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+    }
+
+    @Test
+    public void nestedGroupsGenericGroupInsideRadioNotSelected() throws IOException{
+        Example ex = new Example();
+        new CommandLine()
+                .addOptions(RadioGroup.required(Option.required("bar"), Option.required("baz"),
+                        GroupedOptionGroup.requiredGroup(Option.required("foo")
+                                        .setToInt(ex::setA),
+                                Option.optional("anotherFoo"))
+
+                        ),
+                        Option.required("path")
+                                .setToFile(ex::setMyFile)
+
+
+                )
+
+                .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-bar", "stool"});
+
+        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+    }
+
 
     private static String[] toArgList(String s){
         return s.split(" ");

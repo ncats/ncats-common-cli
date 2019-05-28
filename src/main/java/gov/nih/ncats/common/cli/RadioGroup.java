@@ -10,7 +10,7 @@ import java.util.Objects;
  */
 public class RadioGroup implements OptionGroup {
 
-    private final boolean isRequired;
+    private boolean isRequired;
 
     private final List<Option> options;
 
@@ -30,7 +30,10 @@ public class RadioGroup implements OptionGroup {
         for(CliOption o : options){
             Objects.requireNonNull(o);
             if(o instanceof OptionGroup){
-                optionGroups.add((OptionGroup) o);
+
+                OptionGroup o1 = (OptionGroup) o;
+                o1.setIsRequired(false);
+                optionGroups.add(o1);
             }else{
                 this.options.add( (Option) o);
             }
@@ -38,7 +41,12 @@ public class RadioGroup implements OptionGroup {
     }
 
     @Override
-    public void visit(OptionVisitor visitor) {
+    public void setIsRequired(boolean b) {
+        this.isRequired = b;
+    }
+
+    @Override
+    public void visit(OptionVisitor visitor, Boolean forcedOverride) {
         visitor.preVisit(this);
         for(Option o : options){
             org.apache.commons.cli.Option opt = o.asApacheOption();
@@ -47,7 +55,8 @@ public class RadioGroup implements OptionGroup {
             visitor.visit(opt, o.getConsumer());
         }
         for(OptionGroup og: optionGroups){
-           og.visit(visitor);
+//            og.setIsRequired(false);
+           og.visit(visitor, false);
         }
         visitor.postVisit(this);
     }

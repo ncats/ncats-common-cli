@@ -99,7 +99,7 @@ public class CommandLine implements OptionVisitor{
                 }
             }
         } catch (ParseException e) {
-           throw new IOException(e);
+           throw new ValidationError(e);
         }
     }
 
@@ -129,8 +129,31 @@ public class CommandLine implements OptionVisitor{
     }
 
     @Override
+    public void preVisit(GroupedOptionGroup group) {
+        GroupedValidationBuilder builder = new GroupedValidationBuilder(group.isRequired());
+        validationBuilders.add(builder);
+        validationStack.push(builder);
+    }
+
+    @Override
+    public void postVisit(GroupedOptionGroup group) {
+        popGroup();
+    }
+
+    @Override
     public void postVisit(RadioGroup group) {
-        validationStack.pop();
+
+        popGroup();
+    }
+
+    private void popGroup() {
+        ValidationBuilder builder = validationStack.pop();
+        ValidationBuilder oldBuilder = validationStack.peek();
+
+        if(oldBuilder !=null) {
+            oldBuilder.addGroup(builder);
+
+        }
     }
 
     //have to have a "get seen list which is options that are in the parsed command line
@@ -143,13 +166,17 @@ public class CommandLine implements OptionVisitor{
 
     private static class RadioValidationBuilder implements ValidationBuilder{
         private Set<String> oneOf = new LinkedHashSet<>();
+        List<ValidationBuilder> subBuilders = new ArrayList<>();
 
         private final boolean isRequired;
 
         public RadioValidationBuilder(boolean isRequired) {
             this.isRequired = isRequired;
         }
-
+        @Override
+        public boolean isRequired() {
+            return isRequired;
+        }
         private void add(String n){
             oneOf.add(n);
         }
@@ -165,7 +192,7 @@ public class CommandLine implements OptionVisitor{
         }
 
         @Override
-        public void validate(Set<String> seenOptions) throws ValidationError {
+        public boolean validate(Set<String> seenOptions) throws ValidationError {
             List<String> seen = new ArrayList<>(1);
             for(String n : oneOf){
                 if(seenOptions.contains(n)){
@@ -173,6 +200,14 @@ public class CommandLine implements OptionVisitor{
                 }
             }
 
+
+            for(ValidationBuilder b : subBuilders){
+
+                if(b.validate(seenOptions)){
+                    seen.add(b.toString());
+                }
+
+            }
             int numSeen = seen.size();
             if(numSeen >1){
                 throw new ValidationError("must choose at only 1 radio option but saw : " + seen);
@@ -180,6 +215,73 @@ public class CommandLine implements OptionVisitor{
             if(numSeen==0 && isRequired){
                 throw new ValidationError("must choose radio option of either : " + oneOf);
             }
+            return numSeen ==1;
+        }
+
+        @Override
+        public void addGroup(ValidationBuilder subBuilder) {
+            subBuilders.add(subBuilder);
+        }
+    }
+
+    private static class GroupedValidationBuilder implements ValidationBuilder{
+        private Set<String> required = new LinkedHashSet<>();
+        private Set<String> optionals = new LinkedHashSet<>();
+
+
+        List<ValidationBuilder> subBuilders = new ArrayList<>();
+
+        private final boolean isRequired;
+
+        public GroupedValidationBuilder(boolean isRequired) {
+            this.isRequired = isRequired;
+        }
+
+        @Override
+        public boolean isRequired() {
+            return isRequired;
+        }
+
+        @Override
+        public void addOptional(String name) {
+            optionals.add(name);
+        }
+
+        @Override
+        public void addRequired(String name) {
+            required.add(name);
+        }
+
+        @Override
+        public boolean validate(Set<String> seenOptions) throws ValidationError {
+            List<String> missing = new ArrayList<>(1);
+            for(String n : required){
+                if(!seenOptions.contains(n)){
+                    missing.add(n);
+                }
+            }
+
+
+            for(ValidationBuilder b : subBuilders){
+                if(b.isRequired()){
+                    if(!b.validate(seenOptions)){
+                        missing.add(b.toString());
+                    }
+                }
+            }
+
+            int numMissing= missing.size();
+            if(numMissing >0){
+                if(isRequired || missing.size() != required.size()){
+                    throw new ValidationError("required options must be present :" + missing);
+                }
+            }
+            return isRequired && numMissing ==0;
+        }
+
+        @Override
+        public void addGroup(ValidationBuilder subBuilder) {
+            subBuilders.add(subBuilder);
         }
     }
 
@@ -187,6 +289,7 @@ public class CommandLine implements OptionVisitor{
         Set<String> required = new LinkedHashSet<>();
         Set<String> optional = new LinkedHashSet<>();
 
+        List<ValidationBuilder> subBuilders = new ArrayList<>();
         @Override
         public void addOptional(String name) {
             optional.add(name);
@@ -198,13 +301,29 @@ public class CommandLine implements OptionVisitor{
         }
 
         @Override
-        public void validate(Set<String> seenOptions) {
+        public boolean validate(Set<String> seenOptions) {
             for(String n : required){
                 if(!seenOptions.contains(n)){
                     //TODO make find all mising options?
                     throw new ValidationError("missing required option "+ n);
                 }
             }
+            for(ValidationBuilder b :subBuilders){
+                if(b.isRequired()){
+                    b.validate(seenOptions);
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public void addGroup(ValidationBuilder subBuilder) {
+            subBuilders.add(subBuilder);
+        }
+
+        @Override
+        public boolean isRequired() {
+            return true;
         }
     }
 
@@ -213,6 +332,10 @@ public class CommandLine implements OptionVisitor{
 
         void addOptional(String name);
 
-        void validate(Set<String> seenOptions) throws ValidationError;
+        boolean validate(Set<String> seenOptions) throws ValidationError;
+
+        boolean isRequired();
+
+        void addGroup(ValidationBuilder subBuilder);
     }
 }
