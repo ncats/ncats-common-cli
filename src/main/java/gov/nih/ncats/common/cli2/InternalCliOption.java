@@ -16,36 +16,27 @@
  *    limitations under the License.
  ******************************************************************************/
 
-package gov.nih.ncats.common.cli;
+package gov.nih.ncats.common.cli2;
 
-import java.util.Objects;
-import java.util.function.Consumer;
+import gov.nih.ncats.common.cli.ValidationError;
+
+import java.util.List;
 
 /**
- * Created by katzelda on 6/21/17.
+ * Created by katzelda on 6/1/19.
  */
-public interface OptionValidator<T> {
+interface InternalCliOption extends CliOption{
 
-    static <T> OptionValidator<T> noOp(){
-        return  t-> true;
-    }
 
-    boolean isValid(T value) throws Throwable;
-    
-    
-    default Consumer<T> validateConsumer(Consumer<T> consumer){
-        Objects.requireNonNull(consumer);
-        return t ->{
-            try {
-                if (isValid(t)) {
-                    consumer.accept(t);
-                }else{
-                    throw new ValidationError("invalid argument " + t);
-                }
-            }catch (Throwable throwable){
-//                throw new ValidationError(throwable);
-            }
-        };
-    }
+    void addTo(InternalCliSpecification spec, Boolean forceIsRequired);
 
+
+
+    void validate(Cli cli) throws ValidationError;
+
+    void fireConsumerIfNeeded(Cli cli) throws ValidationError;
+
+    List<String> getSeenList(Cli cli);
+
+    boolean isRequired();
 }

@@ -16,36 +16,25 @@
  *    limitations under the License.
  ******************************************************************************/
 
-package gov.nih.ncats.common.cli;
-
-import java.util.Objects;
-import java.util.function.Consumer;
+package gov.nih.ncats.common.cli2;
 
 /**
- * Created by katzelda on 6/21/17.
+ * Created by katzelda on 5/28/19.
  */
-public interface OptionValidator<T> {
+public class Cli {
 
-    static <T> OptionValidator<T> noOp(){
-        return  t-> true;
+    private final org.apache.commons.cli.CommandLine delegate;
+
+    Cli(org.apache.commons.cli.CommandLine cmd){
+        this.delegate = cmd;
     }
 
-    boolean isValid(T value) throws Throwable;
-    
-    
-    default Consumer<T> validateConsumer(Consumer<T> consumer){
-        Objects.requireNonNull(consumer);
-        return t ->{
-            try {
-                if (isValid(t)) {
-                    consumer.accept(t);
-                }else{
-                    throw new ValidationError("invalid argument " + t);
-                }
-            }catch (Throwable throwable){
-//                throw new ValidationError(throwable);
-            }
-        };
+
+    public boolean hasOption(String argName) {
+        return delegate.hasOption(argName);
     }
 
+    public String getOptionValue(String argName){
+        return delegate.getOptionValue(argName);
+    }
 }
