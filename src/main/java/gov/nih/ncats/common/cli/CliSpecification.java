@@ -16,10 +16,9 @@
  *    limitations under the License.
  ******************************************************************************/
 
-package gov.nih.ncats.common.cli2;
+package gov.nih.ncats.common.cli;
 
 import gov.nih.ncats.common.cli.CommandLine;
-import gov.nih.ncats.common.cli.ValidationError;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;

@@ -16,27 +16,19 @@
  *    limitations under the License.
  ******************************************************************************/
 
-package gov.nih.ncats.common.cli2;
+package gov.nih.ncats.common.cli;
 
-import gov.nih.ncats.common.cli.ValidationError;
-
-import java.util.List;
+import java.io.IOException;
 
 /**
- * Created by katzelda on 6/1/19.
+ * Created by katzelda on 6/4/19.
  */
-interface InternalCliOption extends CliOption{
+public class ValidationError extends IOException {
+    public ValidationError(String message) {
+        super(message);
+    }
 
-
-    void addTo(InternalCliSpecification spec, Boolean forceIsRequired);
-
-
-
-    void validate(Cli cli) throws ValidationError;
-
-    void fireConsumerIfNeeded(Cli cli) throws ValidationError;
-
-    List<String> getSeenList(Cli cli);
-
-    boolean isRequired();
+    public ValidationError(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -16,25 +16,19 @@
  *    limitations under the License.
  ******************************************************************************/
 
-package gov.nih.ncats.common.cli2;
+package gov.nih.ncats.common.cli;
+
+import org.apache.commons.cli.Options;
 
 /**
  * Created by katzelda on 5/28/19.
  */
-public class Cli {
+public class InternalCliSpecification {
 
-    private final org.apache.commons.cli.CommandLine delegate;
-
-    Cli(org.apache.commons.cli.CommandLine cmd){
-        this.delegate = cmd;
-    }
+    private final Options options = new Options();
 
 
-    public boolean hasOption(String argName) {
-        return delegate.hasOption(argName);
-    }
-
-    public String getOptionValue(String argName){
-        return delegate.getOptionValue(argName);
+    Options getInternalOptions(){
+        return options;
     }
 }

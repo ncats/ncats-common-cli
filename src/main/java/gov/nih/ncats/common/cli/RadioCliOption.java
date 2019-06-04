@@ -16,9 +16,7 @@
  *    limitations under the License.
  ******************************************************************************/
 
-package gov.nih.ncats.common.cli2;
-
-import gov.nih.ncats.common.cli.ValidationError;
+package gov.nih.ncats.common.cli;
 
 import java.util.*;
 import java.util.stream.Collectors;
