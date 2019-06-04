@@ -18,8 +18,6 @@
 
 package gov.nih.ncats.common.cli2;
 
-import gov.nih.ncats.common.cli.ValidationError;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
