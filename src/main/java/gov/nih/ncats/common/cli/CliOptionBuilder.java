@@ -18,13 +18,9 @@
 
 package gov.nih.ncats.common.cli;
 
-import java.util.Optional;
-
 /**
- * Created by katzelda on 5/28/19.
+ * Created by katzelda on 6/4/19.
  */
-interface CliOption {
-    boolean isPresent(Cli cli);
-
-    Optional<String> getMissing(Cli cli);
+public interface CliOptionBuilder {
+    CliOptionBuilder setRequired(boolean isRequired);
 }

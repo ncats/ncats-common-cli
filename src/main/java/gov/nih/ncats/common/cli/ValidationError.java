@@ -27,6 +27,9 @@ public class ValidationError extends IOException {
     public ValidationError(String message) {
         super(message);
     }
+    public ValidationError(Throwable cause) {
+        super(cause);
+    }
 
     public ValidationError(String message, Throwable cause) {
         super(message, cause);

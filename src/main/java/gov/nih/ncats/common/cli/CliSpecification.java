@@ -18,7 +18,6 @@
 
 package gov.nih.ncats.common.cli;
 
-import gov.nih.ncats.common.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;

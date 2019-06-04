@@ -21,7 +21,7 @@ package gov.nih.ncats.common.cli;
 /**
  * Created by katzelda on 6/1/19.
  */
-public interface InternalCliOptionBuilder {
+interface InternalCliOptionBuilder extends CliOptionBuilder{
     InternalCliOptionBuilder setRequired(boolean isRequired);
     InternalCliOption build();
     InternalCliOption build(boolean isRequired);
