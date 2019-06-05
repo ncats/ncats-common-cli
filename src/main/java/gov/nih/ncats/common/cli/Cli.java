@@ -37,4 +37,8 @@ public class Cli {
     public String getOptionValue(String argName){
         return delegate.getOptionValue(argName);
     }
+
+    public boolean helpRequested(){
+        return delegate.hasOption("h");
+    }
 }

@@ -18,15 +18,15 @@
 
 package gov.nih.ncats.common.cli;
 
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,6 +34,17 @@ import java.util.List;
  */
 public class CliSpecification {
 
+    public static CliSpecification createWithHelp(InternalCliOptionBuilder... options){
+        InternalCliOptionBuilder[] helpWithOptions = new InternalCliOptionBuilder[options.length +1];
+        System.arraycopy(options,0,helpWithOptions,0, options.length);
+        helpWithOptions[options.length] = option("h")
+                                                .longName("help")
+                                                .description("print helptext")
+                                                .isFlag(true);
+
+        return new CliSpecification(group(helpWithOptions)
+                .setRequired(true));
+    }
     public static CliSpecification create(InternalCliOptionBuilder... options){
          return new CliSpecification(group(options)
                 .setRequired(true));
@@ -53,6 +64,18 @@ public class CliSpecification {
     private final Options options;
     private   InternalCliOption internalCliOption;
 
+    private String programName;
+    private String description;
+
+    public CliSpecification description(String description){
+        this.description = description;
+        return this;
+    }
+    public CliSpecification programName(String programName){
+        this.programName = programName;
+        return this;
+    }
+
     private CliSpecification(InternalCliOptionBuilder options ){
         InternalCliSpecification internalSpec = new InternalCliSpecification();
 
@@ -61,6 +84,10 @@ public class CliSpecification {
 
         this.options = internalSpec.getInternalOptions();
 
+    }
+
+    public boolean hasHelp(){
+        return options.hasOption("h");
     }
     public void parse(URL url) throws IOException {
         List<String> args = new ArrayList<>();
@@ -80,7 +107,39 @@ public class CliSpecification {
 
         parse(args.toArray(new String[args.size()]));
     }
+
+    public String generateUsage(){
+
+        StringBuilder builder = new StringBuilder();
+        if(programName !=null){
+            builder.append(programName).append(" ");
+        }
+        internalCliOption.generateUsage(false).ifPresent(builder::append);
+        String programLine= builder.toString();
+
+        HelpFormatter formatter = new HelpFormatter();
+        StringWriter sw = new StringWriter();
+        try(PrintWriter writer = new PrintWriter(sw)) {
+            formatter.printHelp(writer, formatter.getWidth(), programLine, description, options,
+                    formatter.getLeftPadding(), formatter.getDescPadding(), "");
+        }
+        return sw.toString();
+    }
+    public boolean helpRequested(String[] args){
+        if(!hasHelp()){
+            return false;
+        }
+        for(int i=0; i< args.length; i++){
+            String v = args[i];
+            if("-h".equals(v) || "--help".equals(v) ||"--h".equals(v) || "-help".equals(v)){
+                return true;
+            }
+        }
+        return false;
+
+    }
     public Cli parse(String[] args) throws ValidationError{
+
         CommandLineParser parser = new DefaultParser();
 
         Cli cli;

@@ -126,6 +126,37 @@ public class GroupedOption implements InternalCliOptionBuilder{
         }
 
         @Override
+        public Optional<String> generateUsage(boolean force) {
+            if(!force && !isRequired){
+                return Optional.empty();
+            }
+            List<String> list = new ArrayList<>(requiredOptions.size());
+            for(InternalCliOption choice : requiredOptions){
+                choice.generateUsage(true).ifPresent(list::add);
+            }
+            String requiredGroup =list.stream().collect(Collectors.joining(" , "));
+
+            List<String> optList = new ArrayList<>(optionalOptions.size());
+            for(InternalCliOption choice : optionalOptions){
+                choice.generateUsage(true).ifPresent(c-> optList.add("[ " +c + " ]"));
+            }
+
+            String optionalGroup =list.stream().collect(Collectors.joining(" , "));
+
+            if(requiredGroup.isEmpty() && optionalGroup.isEmpty()){
+                return Optional.empty();
+            }
+            if(requiredGroup.isEmpty()){
+                //just show optionals
+                return Optional.of("(" + optionalGroup + " )");
+            }
+            if(optionalGroup.isEmpty()){
+                return Optional.of("(" + requiredGroup + " )");
+            }
+            return Optional.of("(" + requiredGroup + " " + optionalGroup + " )");
+        }
+
+        @Override
         public boolean isRequired() {
             return isRequired;
         }

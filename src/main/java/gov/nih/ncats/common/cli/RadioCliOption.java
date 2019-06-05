@@ -64,8 +64,21 @@ public class RadioCliOption implements InternalCliOptionBuilder{
         public RadioInternalCliOption(boolean isRequired, InternalCliOption[] choices) {
             this.choices = choices;
             this.isRequired = isRequired;
+        }
 
-            System.out.println("radio choices = " + Arrays.toString(choices));
+        @Override
+        public Optional<String> generateUsage(boolean force) {
+            if(!force && !isRequired){
+                return Optional.empty();
+            }
+            List<String> list = new ArrayList<>(choices.length);
+            for(InternalCliOption choice : choices){
+               choice.generateUsage(true).ifPresent(list::add);
+            }
+            if(list.isEmpty()){
+                return Optional.empty();
+            }
+            return Optional.of(list.stream().collect(Collectors.joining(" | ", "[ ", " ]")));
         }
 
         @Override
@@ -104,8 +117,6 @@ public class RadioCliOption implements InternalCliOptionBuilder{
 
         @Override
         public void validate(Cli cli) throws ValidationError {
-
-            System.out.println("in validate radio");
             List<String> seen = getSeenList(cli);
             if(seen.size() > 1){
                 throw new ValidationError("Radio option must only select at most 1 choice but found " + seen);
@@ -121,7 +132,6 @@ public class RadioCliOption implements InternalCliOptionBuilder{
             for(InternalCliOption choice : choices){
                 List<String> seen =choice.getSeenList(cli);
 
-                System.out.println("seen list = " + seen);
                 if(!seen.isEmpty()){
                     list.add(seen.stream().collect(Collectors.joining(",", "(",")")));
                 }

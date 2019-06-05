@@ -19,6 +19,7 @@
 package gov.nih.ncats.common.cli;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by katzelda on 6/1/19.
@@ -37,4 +38,6 @@ interface InternalCliOption extends CliOption{
     List<String> getSeenList(Cli cli);
 
     boolean isRequired();
+
+    Optional<String> generateUsage(boolean force);
 }
