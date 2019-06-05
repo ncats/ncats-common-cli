@@ -30,12 +30,15 @@ public class RadioCliOption implements InternalCliOptionBuilder{
 
     private boolean isRequired;
 
-    public RadioCliOption(InternalCliOptionBuilder[] choices) {
+    public RadioCliOption(CliOptionBuilder[] choices) {
 
         if(choices ==null || choices.length<2){
             throw new IllegalStateException("Radio option requires at least 2 choices");
         }
-        this.choices = choices;
+        this.choices = new InternalCliOptionBuilder[choices.length];
+        for(int i=0; i< choices.length; i++){
+            this.choices[i] = (InternalCliOptionBuilder)choices[i];
+        }
     }
 
     @Override
@@ -64,6 +67,8 @@ public class RadioCliOption implements InternalCliOptionBuilder{
         public RadioInternalCliOption(boolean isRequired, InternalCliOption[] choices) {
             this.choices = choices;
             this.isRequired = isRequired;
+
+
         }
 
         @Override

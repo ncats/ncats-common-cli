@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class CliSpecification {
 
-    public static CliSpecification createWithHelp(InternalCliOptionBuilder... options){
+    public static CliSpecification createWithHelp(CliOptionBuilder... options){
         InternalCliOptionBuilder[] helpWithOptions = new InternalCliOptionBuilder[options.length +1];
         System.arraycopy(options,0,helpWithOptions,0, options.length);
         helpWithOptions[options.length] = option("h")
@@ -45,7 +45,7 @@ public class CliSpecification {
         return new CliSpecification(group(helpWithOptions)
                 .setRequired(true));
     }
-    public static CliSpecification create(InternalCliOptionBuilder... options){
+    public static CliSpecification create(CliOptionBuilder... options){
          return new CliSpecification(group(options)
                 .setRequired(true));
     }
@@ -54,11 +54,11 @@ public class CliSpecification {
         return new BasicCliOption(argName);
     }
 
-    public static InternalCliOptionBuilder radio(InternalCliOptionBuilder... radioOptions){
+    public static InternalCliOptionBuilder radio(CliOptionBuilder... radioOptions){
         return new RadioCliOption(radioOptions);
     }
 
-    public static InternalCliOptionBuilder group(InternalCliOptionBuilder... options){
+    public static InternalCliOptionBuilder group(CliOptionBuilder... options){
         return new GroupedOption(options);
     }
     private final Options options;

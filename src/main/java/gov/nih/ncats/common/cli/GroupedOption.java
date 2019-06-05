@@ -33,11 +33,14 @@ public class GroupedOption implements InternalCliOptionBuilder{
 
     private boolean isRequired;
 
-    public GroupedOption(InternalCliOptionBuilder[] choices) {
+    public GroupedOption(CliOptionBuilder[] choices) {
         if(choices ==null || choices.length<1){
             throw new IllegalStateException("group option requires at least 1 choices");
         }
-        this.choices = choices;
+        this.choices = new InternalCliOptionBuilder[choices.length];
+        for(int i=0; i< choices.length; i++){
+            this.choices[i] = (InternalCliOptionBuilder)choices[i];
+        }
     }
 
     @Override
