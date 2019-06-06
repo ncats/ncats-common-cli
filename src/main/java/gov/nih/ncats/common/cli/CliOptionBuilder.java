@@ -19,8 +19,17 @@
 package gov.nih.ncats.common.cli;
 
 /**
+ * Public interface that all Option Builder implementations
+ * implement.
+ *
  * Created by katzelda on 6/4/19.
  */
 public interface CliOptionBuilder {
+    /**
+     * Is this Option required.  If not called,
+     * the default is not required.
+     * @param isRequired {@code true} if this option is required; {@code false} otherwise.
+     * @return this.
+     */
     CliOptionBuilder setRequired(boolean isRequired);
 }

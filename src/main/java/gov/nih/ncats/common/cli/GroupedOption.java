@@ -166,7 +166,7 @@ public class GroupedOption implements InternalCliOptionBuilder{
         }
 
         @Override
-        public void validate(Cli cli) throws ValidationError {
+        public void validate(Cli cli) throws CliValidationException {
             int seen=0;
             List<String> missing = new ArrayList<>();
             for(InternalCliOption choice : requiredOptions){
@@ -175,7 +175,7 @@ public class GroupedOption implements InternalCliOptionBuilder{
 
             }
             if(!missing.isEmpty() && isRequired){
-                throw new ValidationError("required group was not found require " +
+                throw new CliValidationException("required group was not found require " +
                         missing.stream().collect(Collectors.joining(",", "( ", " )")));
             }
 
@@ -197,7 +197,7 @@ public class GroupedOption implements InternalCliOptionBuilder{
             return list;
         }
         @Override
-        public void fireConsumerIfNeeded(Cli cli) throws ValidationError {
+        public void fireConsumerIfNeeded(Cli cli) throws CliValidationException {
             for(InternalCliOption choice : choices){
                 choice.fireConsumerIfNeeded(cli);
             }

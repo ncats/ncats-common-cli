@@ -26,15 +26,25 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
+ * Specification describing the options for a given program.
+ * This specification is what is used to validate and parse
+ * program options.
+ *
  * Created by katzelda on 6/4/19.
  */
 public class CliSpecification {
-
+    /**
+     * Create a new {@link CliSpecification} with a default help option
+     * with the option name "-h" and long name "--help" along with  the given other options.
+     * @param options varargs of other options to include in this specification;
+     *                may be empty but no item in the list can be null.
+     * @return a new {@link CliSpecification} will never be null.
+     */
     public static CliSpecification createWithHelp(CliOptionBuilder... options){
+
         InternalCliOptionBuilder[] helpWithOptions = new InternalCliOptionBuilder[options.length +1];
         System.arraycopy(options,0,helpWithOptions,0, options.length);
         helpWithOptions[options.length] = option("h")
@@ -45,6 +55,12 @@ public class CliSpecification {
         return new CliSpecification(group(helpWithOptions)
                 .setRequired(true));
     }
+    /**
+     * Create a new {@link CliSpecification} with the given options.
+     * @param options varargs of options to include in this specification;
+     *                may be empty but no item in the list can be null.
+     * @return a new {@link CliSpecification} will never be null.
+     */
     public static CliSpecification create(CliOptionBuilder... options){
          return new CliSpecification(group(options)
                 .setRequired(true));
@@ -54,11 +70,11 @@ public class CliSpecification {
         return new BasicCliOption(argName);
     }
 
-    public static InternalCliOptionBuilder radio(CliOptionBuilder... radioOptions){
+    public static CliOptionBuilder radio(CliOptionBuilder... radioOptions){
         return new RadioCliOption(radioOptions);
     }
 
-    public static InternalCliOptionBuilder group(CliOptionBuilder... options){
+    public static CliOptionBuilder group(CliOptionBuilder... options){
         return new GroupedOption(options);
     }
     private final Options options;
@@ -76,10 +92,10 @@ public class CliSpecification {
         return this;
     }
 
-    private CliSpecification(InternalCliOptionBuilder options ){
+    private CliSpecification(CliOptionBuilder options ){
         InternalCliSpecification internalSpec = new InternalCliSpecification();
 
-        internalCliOption = options.build();
+        internalCliOption = ((InternalCliOptionBuilder) options).build();
         internalCliOption.addTo(internalSpec, null);
 
         this.options = internalSpec.getInternalOptions();
@@ -138,7 +154,7 @@ public class CliSpecification {
         return false;
 
     }
-    public Cli parse(String[] args) throws ValidationError{
+    public Cli parse(String[] args) throws CliValidationException {
 
         CommandLineParser parser = new DefaultParser();
 
@@ -147,7 +163,7 @@ public class CliSpecification {
             org.apache.commons.cli.CommandLine cmdline = parser.parse(options, args);
             cli = new Cli(cmdline);
         } catch (ParseException e) {
-            throw new ValidationError(e);
+            throw new CliValidationException(e);
         }
 
         internalCliOption.validate(cli);

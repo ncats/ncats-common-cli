@@ -30,7 +30,7 @@ public class RadioCliOption implements InternalCliOptionBuilder{
 
     private boolean isRequired;
 
-    public RadioCliOption(CliOptionBuilder[] choices) {
+    RadioCliOption(CliOptionBuilder[] choices) {
 
         if(choices ==null || choices.length<2){
             throw new IllegalStateException("Radio option requires at least 2 choices");
@@ -121,13 +121,13 @@ public class RadioCliOption implements InternalCliOptionBuilder{
         }
 
         @Override
-        public void validate(Cli cli) throws ValidationError {
+        public void validate(Cli cli) throws CliValidationException {
             List<String> seen = getSeenList(cli);
             if(seen.size() > 1){
-                throw new ValidationError("Radio option must only select at most 1 choice but found " + seen);
+                throw new CliValidationException("Radio option must only select at most 1 choice but found " + seen);
             }
             if(isRequired && seen.size() ==0){
-                throw new ValidationError("Radio option was required but did not find selected option choice");
+                throw new CliValidationException("Radio option was required but did not find selected option choice");
             }
             //only 1 can be present
         }
@@ -144,7 +144,7 @@ public class RadioCliOption implements InternalCliOptionBuilder{
             return list;
         }
         @Override
-        public void fireConsumerIfNeeded(Cli cli) throws ValidationError {
+        public void fireConsumerIfNeeded(Cli cli) throws CliValidationException {
             for(InternalCliOption choice : choices){
                 choice.fireConsumerIfNeeded(cli);
             }

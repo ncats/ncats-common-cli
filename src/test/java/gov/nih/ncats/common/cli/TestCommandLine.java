@@ -114,7 +114,7 @@ public class TestCommandLine {
                 .parse(toArgList("-foo x"));
     }
 
-    @Test(expected = ValidationError.class)
+    @Test(expected = CliValidationException.class)
     public void optionalRadioGroupMultipleShouldThrowException() throws IOException{
 
         CliSpecification.create(radio(
@@ -175,7 +175,7 @@ public class TestCommandLine {
         assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
     }
 
-    @Test(expected = ValidationError.class)
+    @Test(expected = CliValidationException.class)
     public void groupAllRequiredButNotAllInCommandLine() throws IOException{
         Example ex = new Example();
         CliSpecification.create( group(option("foo").setToInt(ex::setA).setRequired(true),
@@ -246,7 +246,7 @@ public class TestCommandLine {
         assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
     }
 
-    @Test(expected = ValidationError.class)
+    @Test(expected = CliValidationException.class)
     public void nestedGroupsOptionalRadioGroupInsideGenericGroupRequiredAndNotSelected() throws IOException{
         Example ex = new Example();
 
@@ -298,7 +298,7 @@ public class TestCommandLine {
 
 
 
-    @Test(expected = ValidationError.class)
+    @Test(expected = CliValidationException.class)
     public void nestedGroupsGenericGroupInsideRadioMultiSelectFails() throws IOException{
         Example ex = new Example();
         CliSpecification.create( radio( option("bar"), option("baz"),

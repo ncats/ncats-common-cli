@@ -23,7 +23,7 @@ import org.apache.commons.cli.Options;
 /**
  * Created by katzelda on 5/28/19.
  */
-public class InternalCliSpecification {
+class InternalCliSpecification {
 
     private final Options options = new Options();
 

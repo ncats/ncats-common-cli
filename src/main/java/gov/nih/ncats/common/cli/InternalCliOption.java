@@ -31,9 +31,9 @@ interface InternalCliOption extends CliOption{
 
 
 
-    void validate(Cli cli) throws ValidationError;
+    void validate(Cli cli) throws CliValidationException;
 
-    void fireConsumerIfNeeded(Cli cli) throws ValidationError;
+    void fireConsumerIfNeeded(Cli cli) throws CliValidationException;
 
     List<String> getSeenList(Cli cli);
 

@@ -43,11 +43,11 @@ public class BasicCliOption implements InternalCliOptionBuilder {
 
     private String argName;
 
-    private ThrowableConsumer<String, ValidationError> consumer = (s) ->{}; //no -op
+    private ThrowableConsumer<String, CliValidationException> consumer = (s) ->{}; //no -op
 
     private boolean isFlag;
 
-    public BasicCliOption(String name) {
+    BasicCliOption(String name) {
         this.name = Objects.requireNonNull(name);
     }
 
@@ -89,7 +89,7 @@ public class BasicCliOption implements InternalCliOptionBuilder {
                 try {
                     consumer.accept(typeConverter.apply(s));
                 } catch (Throwable t) {
-                    throw new ValidationError(t.getMessage(), t);
+                    throw new CliValidationException(t.getMessage(), t);
                 }
             };
         }else{
@@ -98,44 +98,23 @@ public class BasicCliOption implements InternalCliOptionBuilder {
                 try {
                     value = typeConverter.apply(s);
                 } catch (Throwable t) {
-                   throw new ValidationError(t);
+                   throw new CliValidationException(t);
                 }
                 if(validator.test(value)){
                     try {
                         consumer.accept(value);
                     }catch(Throwable t){
-                        throw new ValidationError(t.getMessage(), t);
+                        throw new CliValidationException(t.getMessage(), t);
                     }
                 }else{
-                    throw new ValidationError("setter did not pass validation test");
+                    throw new CliValidationException("setter did not pass validation test");
                 }
             };
         }
         return this;
     }
     public <T extends Throwable> BasicCliOption  setter(ThrowableConsumer<String, T> consumer, Predicate<String> validator){
-    if(validator ==null){
-        this.consumer=s-> {
-            try {
-                consumer.accept(s);
-            } catch (Throwable t) {
-                throw new ValidationError(t.getMessage(), t);
-            }
-        };
-    }else{
-        this.consumer = s->{
-            if(validator.test(s)){
-                try {
-                    consumer.accept(s);
-                }catch(Throwable t){
-                    throw new ValidationError(t.getMessage(), t);
-                }
-            }else{
-                throw new ValidationError("setter did not pass validation test");
-            }
-        };
-    }
-        return this;
+        return setter(ThrowableFunction.identity(), consumer, validator);
     }
 
     public BasicCliOption setToFile(Consumer<File> consumer){
@@ -153,7 +132,7 @@ public class BasicCliOption implements InternalCliOptionBuilder {
         return name;
     }
 
-    public ThrowableConsumer<String, ValidationError> getConsumer() {
+    public ThrowableConsumer<String, CliValidationException> getConsumer() {
         return consumer;
     }
 
@@ -185,11 +164,11 @@ public class BasicCliOption implements InternalCliOptionBuilder {
 
         private final org.apache.commons.cli.Option option;
 
-        private final ThrowableConsumer<String, ValidationError> consumer;
+        private final ThrowableConsumer<String, CliValidationException> consumer;
 
         private final boolean isRequired;
 
-        private InternalBasicCliOption(org.apache.commons.cli.Option option, ThrowableConsumer<String, ValidationError> consumer, boolean isRequired){
+        private InternalBasicCliOption(org.apache.commons.cli.Option option, ThrowableConsumer<String, CliValidationException> consumer, boolean isRequired){
             this.option = option;
             this.consumer = consumer;
             this.isRequired = isRequired;
@@ -230,14 +209,14 @@ public class BasicCliOption implements InternalCliOptionBuilder {
         }
 
         @Override
-        public void validate(Cli cli) throws ValidationError {
+        public void validate(Cli cli) throws CliValidationException {
             if(option.isRequired() && !isPresent(cli)){
-                throw new ValidationError(option.getOpt() + " is required");
+                throw new CliValidationException(option.getOpt() + " is required");
             }
         }
 
         @Override
-        public void fireConsumerIfNeeded(Cli cli) throws ValidationError {
+        public void fireConsumerIfNeeded(Cli cli) throws CliValidationException {
             if(isPresent(cli)){
                 consumer.accept(cli.getOptionValue(option.getOpt()));
             }

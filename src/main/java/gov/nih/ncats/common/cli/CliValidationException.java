@@ -23,15 +23,15 @@ import java.io.IOException;
 /**
  * Created by katzelda on 6/4/19.
  */
-public class ValidationError extends IOException {
-    public ValidationError(String message) {
+public class CliValidationException extends IOException {
+    public CliValidationException(String message) {
         super(message);
     }
-    public ValidationError(Throwable cause) {
+    public CliValidationException(Throwable cause) {
         super(cause);
     }
 
-    public ValidationError(String message, Throwable cause) {
+    public CliValidationException(String message, Throwable cause) {
         super(message, cause);
     }
 }
