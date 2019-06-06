@@ -34,7 +34,7 @@ import java.util.function.Predicate;
 /**
  * Created by katzelda on 5/28/19.
  */
-public class BasicCliOption implements InternalCliOptionBuilder {
+class BasicCliOption implements InternalCliOptionBuilder, BasicCliOptionBuilder {
 
     private String name, description;
     private String longName;
@@ -51,23 +51,27 @@ public class BasicCliOption implements InternalCliOptionBuilder {
         this.name = Objects.requireNonNull(name);
     }
 
-    public BasicCliOption argName(String argName){
+    @Override
+    public BasicCliOptionBuilder argName(String argName){
         this.argName = argName;
         return this;
     }
-    public BasicCliOption longName(String longName){
+    @Override
+    public BasicCliOptionBuilder longName(String longName){
         this.longName = longName;
         return this;
     }
-    public BasicCliOption description(String description){
+    @Override
+    public BasicCliOptionBuilder description(String description){
         this.description = Objects.requireNonNull(description);
         return this;
     }
+    @Override
     public BasicCliOption isFlag(boolean isFlag){
         this.isFlag = isFlag;
         return this;
     }
-    public BasicCliOption required(boolean isRequired){
+    public BasicCliOptionBuilder required(boolean isRequired){
         this.isRequired = isRequired;
         return this;
     }
@@ -78,10 +82,12 @@ public class BasicCliOption implements InternalCliOptionBuilder {
         return this;
     }
 
+    @Override
     public BasicCliOption setter(Consumer<String> consumer){
         return setter(ThrowableFunction.identity(), ThrowableConsumer.wrap(consumer),null);
     }
 
+    @Override
     public <T extends Throwable, R> BasicCliOption setter(ThrowableFunction<String, R, T> typeConverter,
                                                           ThrowableConsumer<R, T> consumer, Predicate<R> validator){
         if(validator ==null){
@@ -113,15 +119,18 @@ public class BasicCliOption implements InternalCliOptionBuilder {
         }
         return this;
     }
-    public <T extends Throwable> BasicCliOption  setter(ThrowableConsumer<String, T> consumer, Predicate<String> validator){
+    @Override
+    public <T extends Throwable> BasicCliOptionBuilder setter(ThrowableConsumer<String, T> consumer, Predicate<String> validator){
         return setter(ThrowableFunction.identity(), consumer, validator);
     }
 
+    @Override
     public BasicCliOption setToFile(Consumer<File> consumer){
         Objects.requireNonNull(consumer);
         this.consumer = s -> consumer.accept(new File(s));
         return this;
     }
+    @Override
     public BasicCliOption setToInt(IntConsumer consumer){
         Objects.requireNonNull(consumer);
         this.consumer = s -> consumer.accept(Integer.parseInt(s));

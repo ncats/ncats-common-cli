@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * Created by katzelda on 6/1/19.
  */
-public class GroupedOption implements InternalCliOptionBuilder{
+class GroupedOption implements InternalCliOptionBuilder{
 
     private final InternalCliOptionBuilder[] choices;
 

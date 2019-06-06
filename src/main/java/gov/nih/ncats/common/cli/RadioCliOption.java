@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 /**
  * Created by katzelda on 6/1/19.
  */
-public class RadioCliOption implements InternalCliOptionBuilder{
+class RadioCliOption implements InternalCliOptionBuilder{
 
     private final InternalCliOptionBuilder[] choices;
 
