@@ -200,7 +200,7 @@ public class BasicCliOption implements InternalCliOptionBuilder {
             if(!force && !isRequired()){
                 return Optional.empty();
             }
-            return Optional.of("-" + option.getOpt() + (option.getArgName()==null ? "" : "<"+option.getArgName()+">"));
+            return Optional.of("-" + option.getOpt() + (option.getArgName()==null ? "" : " <"+option.getArgName()+">"));
         }
 
         @Override

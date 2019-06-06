@@ -73,6 +73,7 @@ public class GroupedOption implements InternalCliOptionBuilder{
             this.isRequired = isRequired;
 
             for(InternalCliOption choice : choices){
+                System.out.println("choice = " + choice);
                 if(choice.isRequired()){
                     requiredOptions.add(choice);
                 }else{
@@ -144,7 +145,7 @@ public class GroupedOption implements InternalCliOptionBuilder{
                 choice.generateUsage(true).ifPresent(c-> optList.add("[ " +c + " ]"));
             }
 
-            String optionalGroup =list.stream().collect(Collectors.joining(" , "));
+            String optionalGroup =optList.stream().collect(Collectors.joining(" , "));
 
             if(requiredGroup.isEmpty() && optionalGroup.isEmpty()){
                 return Optional.empty();
