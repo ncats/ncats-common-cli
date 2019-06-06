@@ -47,7 +47,7 @@ public class CliSpecification {
 
         InternalCliOptionBuilder[] helpWithOptions = new InternalCliOptionBuilder[options.length +1];
         System.arraycopy(options,0,helpWithOptions,0, options.length);
-        helpWithOptions[options.length] = option("h")
+        helpWithOptions[options.length] = (InternalCliOptionBuilder) option("h")
                                                 .longName("help")
                                                 .description("print helptext")
                                                 .isFlag(true);
@@ -66,7 +66,7 @@ public class CliSpecification {
                 .setRequired(true));
     }
 
-    public static BasicCliOption option(String argName){
+    public static BasicCliOptionBuilder option(String argName){
         return new BasicCliOption(argName);
     }
 
