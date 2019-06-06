@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +34,8 @@ class GroupedOption implements InternalCliOptionBuilder{
     private final InternalCliOptionBuilder[] choices;
 
     private boolean isRequired;
+
+    private final List<CliValidator> validators = new ArrayList<>();
 
     public GroupedOption(CliOptionBuilder[] choices) {
         if(choices ==null || choices.length<1){
@@ -44,13 +48,29 @@ class GroupedOption implements InternalCliOptionBuilder{
     }
 
     @Override
+    public InternalCliOptionBuilder addValidation(Predicate<Cli> validationRule, String errorMessage) {
+        validators.add(new CliValidator(validationRule, errorMessage));
+        return this;
+    }
+
+    @Override
+    public InternalCliOptionBuilder addValidation(Predicate<Cli> validationRule, Function<Cli, String> errorMessageFunction) {
+        validators.add(new CliValidator(validationRule, errorMessageFunction));
+        return this;
+    }
+
+    @Override
     public InternalCliOption build() {
-        return new GroupedOptionCliOption(isRequired, Arrays.stream(choices).map(InternalCliOptionBuilder::build).toArray(i-> new InternalCliOption[i]));
+        return new GroupedOptionCliOption(isRequired,
+                Arrays.stream(choices).map(InternalCliOptionBuilder::build).toArray(i-> new InternalCliOption[i]),
+                validators);
     }
 
     @Override
     public InternalCliOption build(boolean isRequired) {
-        return new GroupedOptionCliOption(isRequired, Arrays.stream(choices).map(InternalCliOptionBuilder::build).toArray(i-> new InternalCliOption[i]));
+        return new GroupedOptionCliOption(isRequired,
+                Arrays.stream(choices).map(InternalCliOptionBuilder::build).toArray(i-> new InternalCliOption[i]),
+                validators);
 
     }
 
@@ -68,18 +88,25 @@ class GroupedOption implements InternalCliOptionBuilder{
         private List<InternalCliOption> requiredOptions = new ArrayList<>();
         private List<InternalCliOption> optionalOptions = new ArrayList<>();
 
-        public GroupedOptionCliOption(boolean isRequired, InternalCliOption[] choices) {
+        private final List<CliValidator> validators;
+        public GroupedOptionCliOption(boolean isRequired, InternalCliOption[] choices,
+                                      List<CliValidator> validators) {
             this.choices = choices;
             this.isRequired = isRequired;
 
+            this.validators = validators;
             for(InternalCliOption choice : choices){
-                System.out.println("choice = " + choice);
                 if(choice.isRequired()){
                     requiredOptions.add(choice);
                 }else{
                     optionalOptions.add(choice);
                 }
             }
+        }
+
+        @Override
+        public void addValidator(CliValidator validator) {
+            validators.add(validator);
         }
 
         @Override
@@ -167,7 +194,6 @@ class GroupedOption implements InternalCliOptionBuilder{
 
         @Override
         public void validate(Cli cli) throws CliValidationException {
-            int seen=0;
             List<String> missing = new ArrayList<>();
             for(InternalCliOption choice : requiredOptions){
 
@@ -181,6 +207,12 @@ class GroupedOption implements InternalCliOptionBuilder{
 
             for(InternalCliOption choice : requiredOptions){
                 choice.validate(cli);
+            }
+            for(InternalCliOption choice : optionalOptions){
+                choice.validate(cli);
+            }
+            for(CliValidator v : validators){
+                v.validate(cli);
             }
         }
 

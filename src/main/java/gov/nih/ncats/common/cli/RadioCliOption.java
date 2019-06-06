@@ -19,6 +19,8 @@
 package gov.nih.ncats.common.cli;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +31,7 @@ class RadioCliOption implements InternalCliOptionBuilder{
     private final InternalCliOptionBuilder[] choices;
 
     private boolean isRequired;
+    private final List<CliValidator> validators = new ArrayList<>();
 
     RadioCliOption(CliOptionBuilder[] choices) {
 
@@ -42,6 +45,18 @@ class RadioCliOption implements InternalCliOptionBuilder{
     }
 
     @Override
+    public InternalCliOptionBuilder addValidation(Predicate<Cli> validationRule, String errorMessage) {
+        validators.add(new CliValidator(validationRule, errorMessage));
+        return this;
+    }
+
+    @Override
+    public InternalCliOptionBuilder addValidation(Predicate<Cli> validationRule, Function<Cli, String> errorMessageFunction) {
+        validators.add(new CliValidator(validationRule, errorMessageFunction));
+        return this;
+    }
+
+    @Override
     public InternalCliOptionBuilder setRequired(boolean isRequired) {
          this.isRequired = isRequired;
          return this;
@@ -49,12 +64,16 @@ class RadioCliOption implements InternalCliOptionBuilder{
 
     @Override
     public InternalCliOption build() {
-        return new RadioInternalCliOption(isRequired, Arrays.stream(choices).map(InternalCliOptionBuilder::build).toArray(i-> new InternalCliOption[i]));
+        return new RadioInternalCliOption(isRequired,
+                Arrays.stream(choices).map(InternalCliOptionBuilder::build).toArray(i-> new InternalCliOption[i]),
+                validators);
     }
 
     @Override
     public InternalCliOption build(boolean isRequired) {
-        return new RadioInternalCliOption(isRequired, Arrays.stream(choices).map(InternalCliOptionBuilder::build).toArray(i-> new InternalCliOption[i]));
+        return new RadioInternalCliOption(isRequired,
+                Arrays.stream(choices).map(InternalCliOptionBuilder::build).toArray(i-> new InternalCliOption[i]),
+                validators);
 
     }
 
@@ -63,14 +82,20 @@ class RadioCliOption implements InternalCliOptionBuilder{
         private final InternalCliOption[] choices;
         private final boolean isRequired;
 
+        private final List<CliValidator> validators;
 
-        public RadioInternalCliOption(boolean isRequired, InternalCliOption[] choices) {
+        public RadioInternalCliOption(boolean isRequired, InternalCliOption[] choices,
+                                      List<CliValidator> validators) {
             this.choices = choices;
             this.isRequired = isRequired;
-
+            this.validators = validators;
 
         }
 
+        @Override
+        public void addValidator(CliValidator validator) {
+            validators.add(validator);
+        }
         @Override
         public Optional<String> generateUsage(boolean force) {
             if(!force && !isRequired){
@@ -129,7 +154,12 @@ class RadioCliOption implements InternalCliOptionBuilder{
             if(isRequired && seen.size() ==0){
                 throw new CliValidationException("Radio option was required but did not find selected option choice");
             }
-            //only 1 can be present
+            for(InternalCliOption choice : choices){
+                choice.validate(cli);
+            }
+            for(CliValidator v : validators){
+                v.validate(cli);
+            }
         }
         @Override
         public List<String> getSeenList(Cli cli) {

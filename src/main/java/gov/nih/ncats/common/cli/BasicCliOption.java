@@ -23,11 +23,9 @@ import gov.nih.ncats.common.functions.ThrowableConsumer;
 import gov.nih.ncats.common.functions.ThrowableFunction;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntConsumer;
 import java.util.function.Predicate;
 
@@ -45,10 +43,24 @@ class BasicCliOption implements InternalCliOptionBuilder, BasicCliOptionBuilder 
 
     private ThrowableConsumer<String, CliValidationException> consumer = (s) ->{}; //no -op
 
+    private List<CliValidator> validators = new ArrayList<>();
+
     private boolean isFlag;
 
     BasicCliOption(String name) {
         this.name = Objects.requireNonNull(name);
+    }
+
+    @Override
+    public BasicCliOptionBuilder addValidation(Predicate<Cli> validationRule, String errorMessage) {
+        validators.add(new CliValidator(validationRule, errorMessage));
+        return this;
+    }
+
+    @Override
+    public BasicCliOptionBuilder addValidation(Predicate<Cli> validationRule, Function<Cli, String> errorMessageFunction) {
+        validators.add(new CliValidator(validationRule, errorMessageFunction));
+        return this;
     }
 
     @Override
@@ -158,14 +170,14 @@ class BasicCliOption implements InternalCliOptionBuilder, BasicCliOptionBuilder 
 
     @Override
     public InternalCliOption build() {
-        return new InternalBasicCliOption(asApacheOption(), consumer, this.isRequired);
+        return new InternalBasicCliOption(asApacheOption(), consumer, this.isRequired, validators);
     }
 
     @Override
     public InternalCliOption build(boolean isRequired) {
         org.apache.commons.cli.Option option = asApacheOption();
         option.setRequired(isRequired);
-        return new InternalBasicCliOption(option, consumer, this.isRequired);
+        return new InternalBasicCliOption(option, consumer, this.isRequired, validators);
     }
 
 
@@ -177,12 +189,23 @@ class BasicCliOption implements InternalCliOptionBuilder, BasicCliOptionBuilder 
 
         private final boolean isRequired;
 
-        private InternalBasicCliOption(org.apache.commons.cli.Option option, ThrowableConsumer<String, CliValidationException> consumer, boolean isRequired){
+        private final List<CliValidator> validators;
+
+        private InternalBasicCliOption(org.apache.commons.cli.Option option,
+                                       ThrowableConsumer<String, CliValidationException> consumer,
+                                       boolean isRequired,
+                                       List<CliValidator> validators
+                                       ){
             this.option = option;
             this.consumer = consumer;
             this.isRequired = isRequired;
+            this.validators = validators;
         }
 
+        @Override
+        public void addValidator(CliValidator validator) {
+            validators.add(validator);
+        }
         @Override
         public Optional<String> generateUsage(boolean force) {
             if(!force && !isRequired()){
@@ -219,8 +242,14 @@ class BasicCliOption implements InternalCliOptionBuilder, BasicCliOptionBuilder 
 
         @Override
         public void validate(Cli cli) throws CliValidationException {
-            if(option.isRequired() && !isPresent(cli)){
+            boolean isPresent = isPresent(cli);
+            if(option.isRequired() && !isPresent){
                 throw new CliValidationException(option.getOpt() + " is required");
+            }
+            if(isPresent){
+                for(CliValidator v : validators){
+                    v.validate(cli);
+                }
             }
         }
 

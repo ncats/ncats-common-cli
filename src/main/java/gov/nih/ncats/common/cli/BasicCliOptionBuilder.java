@@ -23,6 +23,7 @@ import gov.nih.ncats.common.functions.ThrowableFunction;
 
 import java.io.File;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntConsumer;
 import java.util.function.Predicate;
 
@@ -48,4 +49,12 @@ public interface BasicCliOptionBuilder extends CliOptionBuilder{
     BasicCliOptionBuilder setToFile(Consumer<File> consumer);
 
     BasicCliOptionBuilder setToInt(IntConsumer consumer);
+
+    @Override
+    BasicCliOptionBuilder setRequired(boolean isRequired);
+    @Override
+    BasicCliOptionBuilder addValidation(Predicate<Cli> validationRule, String errorMessage);
+
+    @Override
+    BasicCliOptionBuilder addValidation(Predicate<Cli> validationRule, Function<Cli,String> errorMessageFunction);
 }

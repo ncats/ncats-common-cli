@@ -18,25 +18,29 @@
 
 package gov.nih.ncats.common.cli;
 
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * Public interface that all Option Builder implementations
- * implement.
- *
- * Created by katzelda on 6/4/19.
+ * Created by katzelda on 6/6/19.
  */
-public interface CliOptionBuilder {
-    /**
-     * Is this Option required.  If not called,
-     * the default is not required.
-     * @param isRequired {@code true} if this option is required; {@code false} otherwise.
-     * @return this.
-     */
-    CliOptionBuilder setRequired(boolean isRequired);
+final class CliValidator {
+    private final Predicate<Cli> validator;
 
-    CliOptionBuilder addValidation(Predicate<Cli> validationRule, String errorMessage);
+    private final Function<Cli, String> errorMessage;
 
-    CliOptionBuilder addValidation(Predicate<Cli> validationRule, Function<Cli,String> errorMessageFunction);
+    public CliValidator(Predicate<Cli> validator, String errorMessage){
+        this(validator, cli-> errorMessage);
+    }
+    public CliValidator(Predicate<Cli> validator, Function<Cli, String> errorMessage) {
+        this.validator = Objects.requireNonNull(validator);
+        this.errorMessage = Objects.requireNonNull(errorMessage);
+    }
+
+    public void validate(Cli cli) throws CliValidationException{
+        if(!validator.test(cli)){
+            throw new CliValidationException(errorMessage.apply(cli));
+        }
+    }
 }

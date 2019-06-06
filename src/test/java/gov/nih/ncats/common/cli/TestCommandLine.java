@@ -270,7 +270,26 @@ public class TestCommandLine {
         CliSpecification.create( group(option("foo").setToInt(ex::setA).setRequired(true),
 
                 radio(option("bar"), option("baz"))
-                        .setRequired(true)
+
+                ),
+                option("path").setToFile(ex::setMyFile).setRequired(true)
+        )
+
+
+
+                .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123"});
+
+        assertEquals(123, ex.getA());
+        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+    }
+    @Test(expected = CliValidationException.class)
+    public void nestedGroupsRequiredRadioGroupInsideGenericGroupNotSelected() throws IOException{
+        Example ex = new Example();
+
+        CliSpecification.create( group(option("foo").setToInt(ex::setA).setRequired(true),
+
+                radio(option("bar"), option("baz"))
+                .setRequired(true)
                 ),
                 option("path").setToFile(ex::setMyFile).setRequired(true)
         )

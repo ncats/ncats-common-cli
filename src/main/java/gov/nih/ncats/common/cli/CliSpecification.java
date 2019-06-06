@@ -27,6 +27,8 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Specification describing the options for a given program.
@@ -83,6 +85,16 @@ public class CliSpecification {
     private String programName;
     private String description;
 
+
+    public CliSpecification addValidation(Predicate<Cli> validationRule, String errorMessage) {
+        internalCliOption.addValidator(new CliValidator(validationRule, errorMessage));
+        return this;
+    }
+
+    public CliSpecification addValidation(Predicate<Cli> validationRule, Function<Cli, String> errorMessageFunction) {
+        internalCliOption.addValidator(new CliValidator(validationRule, errorMessageFunction));
+        return this;
+    }
     public CliSpecification description(String description){
         this.description = description;
         return this;
