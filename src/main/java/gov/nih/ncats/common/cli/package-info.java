@@ -16,23 +16,13 @@
  *    limitations under the License.
  ******************************************************************************/
 
-package gov.nih.ncats.common.cli;
-
-import java.io.IOException;
 
 /**
- * The passed in commandline options did not meet
- * the validation criteria specificed by the {@link CliSpecification}.
+ * NCATS-COMMON-CLI is a Commandline options parser that allows complex
+ *  groupings of options including radio groups.
+ *
+ *  Users first create a {@link gov.nih.ncats.common.cli.CliSpecification}
+ *  and then use the specification to generate a {@link gov.nih.ncats.common.cli.Cli}
+ *  using {@link gov.nih.ncats.common.cli.CliSpecification#parse(java.lang.String[])}
  */
-public class CliValidationException extends IOException {
-    public CliValidationException(String message) {
-        super(message);
-    }
-    public CliValidationException(Throwable cause) {
-        super(cause);
-    }
-
-    public CliValidationException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}
+package gov.nih.ncats.common.cli;

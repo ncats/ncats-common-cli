@@ -35,7 +35,6 @@ import java.util.function.Predicate;
  * This specification is what is used to validate and parse
  * program options.
  *
- * Created by katzelda on 6/4/19.
  */
 public class CliSpecification {
     /**
@@ -68,14 +67,46 @@ public class CliSpecification {
                 .setRequired(true));
     }
 
-    public static BasicCliOptionBuilder option(String argName){
-        return new BasicCliOption(argName);
+    /**
+     * Create a new {@link BasicCliOptionBuilder} that
+     * is mapped to the given option name. By default this radio group is not required,
+     * to make it required in the specification set the {@link CliOptionBuilder#setRequired(boolean)}
+     * method.
+     * @param optName the name of the option that will be
+     *                in the specification as "-$optName".
+     * @return a new {@link BasicCliOptionBuilder} will never be null.
+     */
+    public static BasicCliOptionBuilder option(String optName){
+        return new BasicCliOption(optName);
     }
 
+    /**
+     * Create a new Radio group of options where the specification
+     * is only valid if only one of the given options
+     * can be selected. Nesting other groups as one of the radio options is allowed.
+     * By default this radio group is not required,
+     * to make it required in the specification set the {@link CliOptionBuilder#setRequired(boolean)}
+     * method.
+     * @param radioOptions a varargs list of radio options;
+     *                     none of the options may be null.
+     * @return a new {@link CliOptionBuilder}.
+     */
     public static CliOptionBuilder radio(CliOptionBuilder... radioOptions){
         return new RadioCliOption(radioOptions);
     }
-
+    /**
+     * Create a new group of options where the specification is
+     * only valid if either all the required options in the group are present,
+     * or none of them are present.  If this group is required, then this specification
+     * is only valid if the all the required options in this group are present.
+     * Nesting other groups as one of this group's options is allowed.
+     * By default this group is not required,
+     * to make it required in the specification set the {@link CliOptionBuilder#setRequired(boolean)}
+     * method.
+     * @param options a varargs list of options in this group;
+     *                     none of the options may be null.
+     * @return a new {@link CliOptionBuilder}.
+     */
     public static CliOptionBuilder group(CliOptionBuilder... options){
         return new GroupedOption(options);
     }
@@ -85,20 +116,55 @@ public class CliSpecification {
     private String programName;
     private String description;
 
-
+    /**
+     * Add an additional validation rule to this overall specification.
+     * @param validationRule A {@link Predicate} function that passes in the
+     *                       parsed {@link Cli} instance from a program invocation
+     *                       that will return {@code true} if this Cli passes this new validation
+     *                       rule; {@code false} otherwise.  This Predicate can not be null.
+     * @param errorMessage The message to use in the new {@link CliValidationException}
+     *                     that will be thrown if the given predicate returns {@code false}.
+     *
+     * @return this.
+     * @throws NullPointerException if validationRule is null.
+     */
     public CliSpecification addValidation(Predicate<Cli> validationRule, String errorMessage) {
         internalCliOption.addValidator(new CliValidator(validationRule, errorMessage));
         return this;
     }
-
+    /**
+     * Add an additional validation rule to this overall specification.
+     * @param validationRule A {@link Predicate} function that passes in the
+     *                       parsed {@link Cli} instance from a program invocation
+     *                       that will return {@code true} if this Cli passes this new validation
+     *                       rule; {@code false} otherwise.  This Predicate can not be null.
+     * @param errorMessageFunction A function to generate the message to use in the new {@link CliValidationException}
+     *                     that will be thrown if the given predicate returns {@code false}.
+     * @return this.
+     * @throws NullPointerException if either parameter is null.
+     */
     public CliSpecification addValidation(Predicate<Cli> validationRule, Function<Cli, String> errorMessageFunction) {
         internalCliOption.addValidator(new CliValidator(validationRule, errorMessageFunction));
         return this;
     }
+
+    /**
+     * Sets a description to this usage to describe what this program
+     * does.
+     * @param description the description of this program,
+     *                   if {@code null}, then there is no description.
+     * @return this.
+     */
     public CliSpecification description(String description){
         this.description = description;
         return this;
     }
+    /**
+     * Sets this program name to this usage.
+     * @param programName the name of this program,
+     *                   if {@code null}, then there is no name.
+     * @return this.
+     */
     public CliSpecification programName(String programName){
         this.programName = programName;
         return this;
@@ -114,10 +180,16 @@ public class CliSpecification {
 
     }
 
-    public boolean hasHelp(){
-        return options.hasOption("h");
-    }
-    public void parse(URL url) throws IOException {
+
+    /**
+     * Parse the query parameters as a urlencoded command line arguments.
+     * It is a assumed that {@code key=value} means {@code -key value}.
+     *
+     * @param url
+     * @return
+     * @throws IOException
+     */
+    public Cli parse(URL url) throws IOException {
         List<String> args = new ArrayList<>();
 
         String[] split = url.getQuery().split("&");
@@ -133,9 +205,13 @@ public class CliSpecification {
             }
         }
 
-        parse(args.toArray(new String[args.size()]));
+        return parse(args.toArray(new String[args.size()]));
     }
 
+    /**
+     * Generate the Usage String of this specification.
+     * @return a new String will never be null.
+     */
     public String generateUsage(){
 
         StringBuilder builder = new StringBuilder();
@@ -153,10 +229,14 @@ public class CliSpecification {
         }
         return sw.toString();
     }
+
+    /**
+     * Is one of these passed in arguments -h, --h, -help or --help.
+     * @param args the command line arguments to parse.
+     * @return {@code true} if at least one of these arguments
+     * is "-h", "--h", "-help" or "--help"; {@code false} otherwise
+     */
     public boolean helpRequested(String[] args){
-        if(!hasHelp()){
-            return false;
-        }
         for(int i=0; i< args.length; i++){
             String v = args[i];
             if("-h".equals(v) || "--help".equals(v) ||"--h".equals(v) || "-help".equals(v)){
@@ -166,6 +246,13 @@ public class CliSpecification {
         return false;
 
     }
+
+    /**
+     * Parse the command line options of the given String array, often the arguments from a Main method.
+     * @param args the arguments array to parse.
+     * @return a new {@link Cli} of the parsed options.
+     * @throws CliValidationException if the arguments violate this {@link CliSpecification}.
+     */
     public Cli parse(String[] args) throws CliValidationException {
 
         CommandLineParser parser = new DefaultParser();

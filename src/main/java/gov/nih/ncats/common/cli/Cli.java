@@ -19,7 +19,9 @@
 package gov.nih.ncats.common.cli;
 
 /**
- * Created by katzelda on 5/28/19.
+ * A Parsed command line object that
+ * lets the user programmatically see what
+ * options were set and what those option values are.
  */
 public class Cli {
 
@@ -29,16 +31,21 @@ public class Cli {
         this.delegate = cmd;
     }
 
-
-    public boolean hasOption(String argName) {
-        return delegate.hasOption(argName);
+    /**
+     * Does this {@link Cli} object have the given
+     * option name.
+     * @param optName the short option name to look for.
+     * @return
+     */
+    public boolean hasOption(String optName) {
+        return delegate.hasOption(optName);
     }
 
-    public String getOptionValue(String argName){
-        return delegate.getOptionValue(argName);
+    public String getOptionValue(String optName){
+        return delegate.getOptionValue(optName);
     }
 
     public boolean helpRequested(){
-        return delegate.hasOption("h");
+        return delegate.hasOption("h") || delegate.hasOption("help");
     }
 }

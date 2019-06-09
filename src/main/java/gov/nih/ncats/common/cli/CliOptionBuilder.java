@@ -35,8 +35,29 @@ public interface CliOptionBuilder {
      * @return this.
      */
     CliOptionBuilder setRequired(boolean isRequired);
-
+    /**
+     * Add an additional validation rule to this option Builder.
+     * @param validationRule A {@link Predicate} function that passes in the
+     *                       parsed {@link Cli} instance from a program invocation
+     *                       that will return {@code true} if this Cli passes this new validation
+     *                       rule; {@code false} otherwise.  This Predicate can not be null.
+     * @param errorMessage The message to use in the new {@link CliValidationException}
+     *                     that will be thrown if the given predicate returns {@code false}.
+     *
+     * @return this.
+     * @throws NullPointerException if validationRule is null.
+     */
     CliOptionBuilder addValidation(Predicate<Cli> validationRule, String errorMessage);
-
+    /**
+     * Add an additional validation rule to this option Builder.
+     * @param validationRule A {@link Predicate} function that passes in the
+     *                       parsed {@link Cli} instance from a program invocation
+     *                       that will return {@code true} if this Cli passes this new validation
+     *                       rule; {@code false} otherwise.  This Predicate can not be null.
+     * @param errorMessageFunction A function to generate the message to use in the new {@link CliValidationException}
+     *                     that will be thrown if the given predicate returns {@code false}.
+     * @return this.
+     * @throws NullPointerException if either parameter is null.
+     */
     CliOptionBuilder addValidation(Predicate<Cli> validationRule, Function<Cli,String> errorMessageFunction);
 }
