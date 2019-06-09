@@ -185,9 +185,10 @@ public class CliSpecification {
      * Parse the query parameters as a urlencoded command line arguments.
      * It is a assumed that {@code key=value} means {@code -key value}.
      *
-     * @param url
-     * @return
-     * @throws IOException
+     * @param url the {@link URL} to parse; can not e null.
+     * @return a new {@link Cli} of the parsed options in the URL parameters.
+     * @throws IOException if there is a prolem decodeing the URL parameters
+     * @throws CliValidationException if the url parameters violate this {@link CliSpecification}.
      */
     public Cli parse(URL url) throws IOException {
         List<String> args = new ArrayList<>();

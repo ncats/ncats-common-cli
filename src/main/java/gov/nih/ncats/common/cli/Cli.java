@@ -35,7 +35,7 @@ public class Cli {
      * Does this {@link Cli} object have the given
      * option name.
      * @param optName the short option name to look for.
-     * @return
+     * @return {@code true} if this command line has the given option; {@code flase} otherwise.
      */
     public boolean hasOption(String optName) {
         return delegate.hasOption(optName);

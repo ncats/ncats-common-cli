@@ -28,7 +28,7 @@ import java.util.function.IntConsumer;
 import java.util.function.Predicate;
 
 /**
- * Created by katzelda on 6/6/19.
+ * Builder that builds a single option.
  */
 public interface BasicCliOptionBuilder extends CliOptionBuilder{
     BasicCliOptionBuilder argName(String argName);
