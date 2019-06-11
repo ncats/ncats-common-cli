@@ -119,7 +119,7 @@ class GroupedOption implements InternalCliOptionBuilder{
                 return Optional.empty();
             }
 
-            return Optional.of(missingOps.stream().collect(Collectors.joining(" ", "( ", " )")));
+            return Optional.of(missingOps.stream().collect(Collectors.joining(" ", "(", ")")));
         }
 
         @Override
@@ -165,26 +165,26 @@ class GroupedOption implements InternalCliOptionBuilder{
             for(InternalCliOption choice : requiredOptions){
                 choice.generateUsage(true).ifPresent(list::add);
             }
-            String requiredGroup =list.stream().collect(Collectors.joining(" , "));
+            String requiredGroup =list.stream().collect(Collectors.joining(","));
 
             List<String> optList = new ArrayList<>(optionalOptions.size());
             for(InternalCliOption choice : optionalOptions){
-                choice.generateUsage(true).ifPresent(c-> optList.add("[ " +c + " ]"));
+                choice.generateUsage(true).ifPresent(c-> optList.add("[" +c + "]"));
             }
 
-            String optionalGroup =optList.stream().collect(Collectors.joining(" , "));
+            String optionalGroup =optList.stream().collect(Collectors.joining(","));
 
             if(requiredGroup.isEmpty() && optionalGroup.isEmpty()){
                 return Optional.empty();
             }
             if(requiredGroup.isEmpty()){
                 //just show optionals
-                return Optional.of("(" + optionalGroup + " )");
+                return Optional.of("(" + optionalGroup + ")");
             }
             if(optionalGroup.isEmpty()){
-                return Optional.of("(" + requiredGroup + " )");
+                return Optional.of("(" + requiredGroup + ")");
             }
-            return Optional.of("(" + requiredGroup + " " + optionalGroup + " )");
+            return Optional.of("(" + requiredGroup + " " + optionalGroup + ")");
         }
 
         @Override

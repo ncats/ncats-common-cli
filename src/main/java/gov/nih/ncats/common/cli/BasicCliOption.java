@@ -21,13 +21,11 @@ package gov.nih.ncats.common.cli;
 
 import gov.nih.ncats.common.functions.ThrowableConsumer;
 import gov.nih.ncats.common.functions.ThrowableFunction;
+import gov.nih.ncats.common.functions.ThrowableIntConsumer;
 
 import java.io.File;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntConsumer;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 /**
  * Created by katzelda on 5/28/19.
@@ -94,9 +92,59 @@ class BasicCliOption implements InternalCliOptionBuilder, BasicCliOptionBuilder 
         return this;
     }
 
+//    @Override
+//    public BasicCliOption setter(Consumer<String> consumer){
+//        return setter(ThrowableFunction.identity(), ThrowableConsumer.wrap(consumer),null);
+//    }
+
     @Override
-    public BasicCliOption setter(Consumer<String> consumer){
-        return setter(ThrowableFunction.identity(), ThrowableConsumer.wrap(consumer),null);
+    public <T extends Throwable> BasicCliOption setter(ThrowableConsumer<String, T> consumer){
+        return setter(ThrowableFunction.identity(), consumer,null);
+    }
+
+    @Override
+    public <T extends Throwable> BasicCliOptionBuilder setToFile(ThrowableConsumer<File, T> consumer) {
+        Objects.requireNonNull(consumer);
+        this.consumer = s -> {
+            try{
+                consumer.accept(new File(s));
+            }catch(Throwable t){
+                if( t instanceof CliValidationException){
+                    throw (CliValidationException)t;
+                }
+                throw new CliValidationException(t.getMessage(), t);
+            }
+        };
+        return this;
+    }
+
+    @Override
+    public <T extends Throwable> BasicCliOptionBuilder setToInt(ThrowableIntConsumer<T> consumer, IntPredicate validator) {
+        if(validator == null){
+            return setToInt(consumer);
+        }
+
+        this.consumer = s->{
+            int value;
+            try {
+                value = Integer.parseInt(s);
+            }catch(Throwable t){
+                throw new CliValidationException("error parsing int value", t);
+            }
+            if(validator.test(value)){
+                try {
+                    consumer.accept(value);
+                }catch(Throwable t){
+                    if( t instanceof CliValidationException){
+                        throw (CliValidationException)t;
+                    }
+                    throw new CliValidationException(t.getMessage(), t);
+                }
+            }else{
+                throw new CliValidationException("setter did not pass validation test");
+            }
+        };
+        return this;
     }
 
     @Override
@@ -107,21 +155,31 @@ class BasicCliOption implements InternalCliOptionBuilder, BasicCliOptionBuilder 
                 try {
                     consumer.accept(typeConverter.apply(s));
                 } catch (Throwable t) {
+                    if( t instanceof CliValidationException){
+                        throw (CliValidationException)t;
+                    }
                     throw new CliValidationException(t.getMessage(), t);
                 }
             };
         }else{
+
             this.consumer = s->{
                 R value;
                 try {
                     value = typeConverter.apply(s);
                 } catch (Throwable t) {
+                    if( t instanceof CliValidationException){
+                        throw (CliValidationException)t;
+                    }
                    throw new CliValidationException(t);
                 }
                 if(validator.test(value)){
                     try {
                         consumer.accept(value);
                     }catch(Throwable t){
+                        if( t instanceof CliValidationException){
+                            throw (CliValidationException)t;
+                        }
                         throw new CliValidationException(t.getMessage(), t);
                     }
                 }else{
@@ -136,16 +194,22 @@ class BasicCliOption implements InternalCliOptionBuilder, BasicCliOptionBuilder 
         return setter(ThrowableFunction.identity(), consumer, validator);
     }
 
+//    @Override
+//    public BasicCliOption setToFile(Consumer<File> consumer){
+//        Objects.requireNonNull(consumer);
+//        this.consumer = s -> consumer.accept(new File(s));
+//        return this;
+//    }
     @Override
-    public BasicCliOption setToFile(Consumer<File> consumer){
+    public <T extends Throwable> BasicCliOption setToInt(ThrowableIntConsumer<T> consumer){
         Objects.requireNonNull(consumer);
-        this.consumer = s -> consumer.accept(new File(s));
-        return this;
-    }
-    @Override
-    public BasicCliOption setToInt(IntConsumer consumer){
-        Objects.requireNonNull(consumer);
-        this.consumer = s -> consumer.accept(Integer.parseInt(s));
+        this.consumer = s ->{
+            try {
+                consumer.accept(Integer.parseInt(s));
+            }catch(Throwable t){
+                throw new CliValidationException(t);
+            }
+        };
         return this;
     }
 

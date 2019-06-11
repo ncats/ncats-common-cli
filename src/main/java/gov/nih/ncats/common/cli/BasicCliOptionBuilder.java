@@ -20,12 +20,10 @@ package gov.nih.ncats.common.cli;
 
 import gov.nih.ncats.common.functions.ThrowableConsumer;
 import gov.nih.ncats.common.functions.ThrowableFunction;
+import gov.nih.ncats.common.functions.ThrowableIntConsumer;
 
 import java.io.File;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntConsumer;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 /**
  * Builder that builds a single option.
@@ -38,17 +36,21 @@ public interface BasicCliOptionBuilder extends CliOptionBuilder{
     BasicCliOptionBuilder description(String description);
 
     BasicCliOptionBuilder isFlag(boolean isFlag);
+//    BasicCliOptionBuilder setter(Consumer<String> consumer);
 
-    BasicCliOptionBuilder setter(Consumer<String> consumer);
+    <T extends Throwable> BasicCliOptionBuilder setter(ThrowableConsumer<String, T> consumer);
 
     <T extends Throwable, R> BasicCliOptionBuilder setter(ThrowableFunction<String, R, T> typeConverter,
                                                    ThrowableConsumer<R, T> consumer, Predicate<R> validator);
 
     <T extends Throwable> BasicCliOptionBuilder setter(ThrowableConsumer<String, T> consumer, Predicate<String> validator);
 
-    BasicCliOptionBuilder setToFile(Consumer<File> consumer);
+    <T extends Throwable> BasicCliOptionBuilder setToFile(ThrowableConsumer<File, T> consumer);
 
-    BasicCliOptionBuilder setToInt(IntConsumer consumer);
+//    BasicCliOptionBuilder setToFile(Consumer<File> consumer);
+    <T extends Throwable> BasicCliOptionBuilder setToInt(ThrowableIntConsumer<T> consumer);
+
+    <T extends Throwable> BasicCliOptionBuilder setToInt(ThrowableIntConsumer<T> consumer, IntPredicate validator);
 
     @Override
     BasicCliOptionBuilder setRequired(boolean isRequired);

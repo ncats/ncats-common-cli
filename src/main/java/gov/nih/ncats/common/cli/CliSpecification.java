@@ -25,10 +25,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Specification describing the options for a given program.
@@ -37,6 +38,9 @@ import java.util.function.Predicate;
  *
  */
 public class CliSpecification {
+
+    private static final String NEW_LINE = String.format("%n");
+    private static final Pattern NEXT_WHITE_SPACE_PATTERN = Pattern.compile("\\s");
     /**
      * Create a new {@link CliSpecification} with a default help option
      * with the option name "-h" and long name "--help" along with  the given other options.
@@ -116,6 +120,9 @@ public class CliSpecification {
     private String programName;
     private String description;
 
+    private String footer;
+
+    private Set<UsageExample> examples = new LinkedHashSet<>();
     /**
      * Add an additional validation rule to this overall specification.
      * @param validationRule A {@link Predicate} function that passes in the
@@ -148,6 +155,30 @@ public class CliSpecification {
         return this;
     }
 
+    /**
+     * Sets the footer that will be printed at the bottom of this usage.
+     *
+     * @param options the options as a string as one would write them on the on the commandline;
+     *                can not e {@code null} but may be empty.
+     *
+     * @param explanation the explanation for what this option combination does.
+     * @return this.
+     */
+    public CliSpecification example(String options, String explanation){
+        this.examples.add(new UsageExample(options, explanation));
+        return this;
+    }
+    /**
+     * Sets the footer that will be printed at the bottom of this usage.
+     *
+     * @param footer the footer of this program's usage,
+     *                   if {@code null}, then there is no footer.
+     * @return this.
+     */
+    public CliSpecification footer(String footer){
+        this.footer = footer;
+        return this;
+    }
     /**
      * Sets a description to this usage to describe what this program
      * does.
@@ -208,29 +239,209 @@ public class CliSpecification {
 
         return parse(args.toArray(new String[args.size()]));
     }
-
     /**
      * Generate the Usage String of this specification.
      * @return a new String will never be null.
      */
     public String generateUsage(){
 
-        StringBuilder builder = new StringBuilder();
-        if(programName !=null){
+        //this code is based on the printHelp and printUsage commands in apache.cli.HelpFormatter
+        //with additions for handling the groups
+
+        //width, left and desc padding use defaults from HelpFormatter
+        int width = 120;
+        int leftPadding = 1;
+        int descPadding= 3;
+
+
+
+        String lpad = createPadding(leftPadding);
+        String dpad = createPadding(descPadding);
+
+        StringBuilder builder = new StringBuilder("usage: ");
+        if(programName !=null) {
             builder.append(programName).append(" ");
         }
-        internalCliOption.generateUsage(false).ifPresent(builder::append);
-        String programLine= builder.toString();
+        StringBuilder usagebuilder = new StringBuilder();
+        internalCliOption.generateUsage(false).ifPresent(usagebuilder::append);
 
-        HelpFormatter formatter = new HelpFormatter();
-        StringWriter sw = new StringWriter();
-        try(PrintWriter writer = new PrintWriter(sw)) {
-            formatter.printHelp(writer, formatter.getWidth(), programLine, description, options,
-                    formatter.getLeftPadding(), formatter.getDescPadding(), "");
+        renderWrappedText(builder, width, builder.length(), usagebuilder.toString());
+
+        builder.append(NEW_LINE);
+
+        if(description !=null){
+            renderWrappedText(builder, width, 0, description);
+            builder.append(NEW_LINE);
         }
-        return sw.toString();
+
+        @SuppressWarnings("unchecked")
+        List<Option> opList = new ArrayList<>(options.getOptions());
+        if(!opList.isEmpty()){
+            builder.append(NEW_LINE).append("options:").append(NEW_LINE);
+        }
+        List<StringBuilder> prefixList = new ArrayList<>();
+        int max= 0;
+
+        Collections.sort(opList, DEFAULT_OPTION_COMPARATOR.INSTANCE);
+
+        for(Option option : opList){
+            StringBuilder optBuf = new StringBuilder();
+
+            optBuf.append(lpad).append("    -").append(option.getOpt());
+            if(option.hasLongOpt()){
+                optBuf.append(",--").append(option.getLongOpt());
+            }
+            if(option.hasArg()){
+                if(option.hasArgName()){
+                    optBuf.append(" <").append(option.getArgName()).append('>');
+                }else{
+                    optBuf.append(' ');
+                }
+            }
+            prefixList.add(optBuf);
+            max = Math.max(optBuf.length(), max);
+        }
+
+        for(int x = 0; x<opList.size(); x++){
+            Option option = opList.get(x);
+            StringBuilder optBuf= prefixList.get(x);
+
+            if(optBuf.length() < max){
+                optBuf.append(createPadding(max - optBuf.length()));
+            }
+            optBuf.append(dpad);
+
+            int nextLineTabStop = max + descPadding;
+
+            if(option.getDescription() !=null){
+                optBuf.append(option.getDescription());
+            }
+
+            renderWrappedText(builder, width, nextLineTabStop, optBuf.toString());
+
+            if(x < opList.size()-1){
+                builder.append(NEW_LINE).append(NEW_LINE);
+            }
+        }
+
+
+        if(!examples.isEmpty()){
+            builder.append(NEW_LINE).append(NEW_LINE)
+                    .append("Examples:").append(NEW_LINE);
+
+            for(UsageExample example : examples){
+                builder.append(NEW_LINE).append(lpad).append("     $");
+                if(programName !=null) {
+                    builder.append(programName).append(' ');
+                }
+
+                renderWrappedText(builder, width, descPadding, example.getUsage());
+                builder.append(NEW_LINE).append(NEW_LINE).append(dpad);
+                renderWrappedText(builder, width, descPadding, example.getDescription());
+                builder.append(NEW_LINE);
+            }
+
+        }
+
+
+        if(footer !=null){
+            builder.append(NEW_LINE);
+            renderWrappedText(builder, width, 0, footer);
+        }
+        //add new line at the end no matter what
+        builder.append(NEW_LINE);
+
+        return builder.toString();
+
     }
 
+    private void renderWrappedText(StringBuilder builder, int width,
+                                   int nextLineTabStop, String optionString) {
+
+        String text = optionString;
+        int pos = findWrapPos(text, width,0);
+        if(pos == -1){
+            builder.append(rTrim(text));
+            return;
+        }
+
+        builder.append(rTrim(text.substring(0, pos))).append(NEW_LINE);
+
+        //the rest of the lines of the text have to be
+        String padding = createPadding(nextLineTabStop);
+
+
+        while(true){
+            text = padding+ text.substring(pos).trim();
+            pos = findWrapPos(text, width, nextLineTabStop);
+            if(pos == -1){
+                builder.append(text);
+                return;
+            }
+            builder.append(rTrim(text.substring(0, pos))).append(NEW_LINE);
+        }
+    }
+
+    /**
+     * Generate the Usage String of this specification.
+     * @return a new String will never be null.
+     */
+//    public String generateUsage(){
+//
+//        StringBuilder builder = new StringBuilder();
+//        if(programName !=null){
+//            builder.append(programName).append(" ");
+//        }
+//        internalCliOption.generateUsage(false).ifPresent(builder::append);
+//        String programLine= builder.toString();
+//
+//        HelpFormatter formatter = new HelpFormatter();
+//        StringWriter sw = new StringWriter();
+//        try(PrintWriter writer = new PrintWriter(sw)) {
+//            formatter.printHelp(writer, formatter.getWidth(), programLine, description, options,
+//                    formatter.getLeftPadding(), formatter.getDescPadding(), footer==null? "": footer);
+//        }
+//        return sw.toString();
+//    }
+
+
+    private String rTrim(String buf) {
+        int pos = buf.length();
+        while( (pos > 0) && Character.isWhitespace(buf.charAt(pos -1))){
+            --pos;
+        }
+        return buf.substring(0, pos);
+    }
+
+
+    private int findWrapPos(String text, int width, int startPos) {
+        if(text.length() < width){
+            return -1;
+        }
+
+        String subString = new StringBuilder(text.substring(0, width))
+                .reverse()
+                .toString();
+
+        Matcher matcher = NEXT_WHITE_SPACE_PATTERN.matcher(subString);
+        if(matcher.find()){
+            //our string is reversed so flip it
+            int foundPosition= matcher.start();
+            return subString.length() - foundPosition;
+        }
+        //no more whitespace
+        return -1;
+
+    }
+
+
+    private String createPadding(int length) {
+        StringBuilder builder = new StringBuilder(length);
+        for(int i =0; i<length; i++	){
+            builder.append(' ');
+        }
+        return builder.toString();
+    }
     /**
      * Is one of these passed in arguments -h, --h, -help or --help.
      * @param args the command line arguments to parse.
@@ -272,4 +483,16 @@ public class CliSpecification {
         return cli;
 
     }
+
+    private static enum DEFAULT_OPTION_COMPARATOR implements Comparator<Option> {
+        INSTANCE;
+
+        @Override
+        public int compare(Option o1, Option o2) {
+            //this should always work for us because we always have short name returned by getOpt()
+            return o1.getOpt().compareTo(o2.getOpt());
+        }
+
+    }
+
 }

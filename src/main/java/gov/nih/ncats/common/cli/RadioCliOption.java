@@ -108,7 +108,7 @@ class RadioCliOption implements InternalCliOptionBuilder{
             if(list.isEmpty()){
                 return Optional.empty();
             }
-            return Optional.of(list.stream().collect(Collectors.joining(" | ", "[ ", " ]")));
+            return Optional.of(list.stream().collect(Collectors.joining(" | ", "[", "]")));
         }
 
         @Override

@@ -22,7 +22,7 @@
   <groupId>gov.nih.ncats</groupId>
   <artifactId>ncats-common-cli</artifactId>
   <packaging>jar</packaging>
-  <version>0.9</version>
+  <version>0.9.1</version>
   <name>ncats-common-cli</name>
 
   <url>https://spotlite.nih.gov/ncats/ncats-common-cli/</url>
@@ -77,7 +77,7 @@
     <dependency>
       <groupId>gov.nih.ncats</groupId>
       <artifactId>ncats-common</artifactId>
-      <version>0.3</version>
+      <version>0.3.1</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
