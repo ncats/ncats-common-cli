@@ -114,6 +114,20 @@ public class CliSpecification {
     public static CliOptionBuilder group(CliOptionBuilder... options){
         return new GroupedOption(options);
     }
+    /**
+     * Create a new group of options where the specification
+     * is only valid if at least one of the given options
+     * is selected. Nesting other groups as one of the "at least one of" options is allowed.
+     * By default this group is not required,
+     * to make it required in the specification set the {@link CliOptionBuilder#setRequired(boolean)}
+     * method.
+     * @param radioOptions a varargs list of radio options;
+     *                     none of the options may be null.
+     * @return a new {@link CliOptionBuilder}.
+     */
+    public static CliOptionBuilder atLeastOneOf(CliOptionBuilder... options){
+        return new AtLeastOneOfOption(options);
+    }
     private final Options options;
     private   InternalCliOption internalCliOption;
 
