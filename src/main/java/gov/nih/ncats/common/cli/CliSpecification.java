@@ -21,8 +21,6 @@ package gov.nih.ncats.common.cli;
 import org.apache.commons.cli.*;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
@@ -136,6 +134,8 @@ public class CliSpecification {
 
     private String footer;
 
+    private List<Trailer> trailers = new ArrayList<>();
+    
     private Set<UsageExample> examples = new LinkedHashSet<>();
     /**
      * Add an additional validation rule to this overall specification.
@@ -193,6 +193,12 @@ public class CliSpecification {
         this.footer = footer;
         return this;
     }
+    
+    public CliSpecification trailer(Trailer trailer) {
+    	this.trailers.add(Objects.requireNonNull(trailer));
+    	return this;
+    }
+    
     /**
      * Sets a description to this usage to describe what this program
      * does.
@@ -232,7 +238,7 @@ public class CliSpecification {
      *
      * @param url the {@link URL} to parse; can not e null.
      * @return a new {@link Cli} of the parsed options in the URL parameters.
-     * @throws IOException if there is a prolem decodeing the URL parameters
+     * @throws IOException if there is a problem decoding the URL parameters
      * @throws CliValidationException if the url parameters violate this {@link CliSpecification}.
      */
     public Cli parse(URL url) throws IOException {
@@ -288,7 +294,7 @@ public class CliSpecification {
             builder.append(NEW_LINE);
         }
 
-        @SuppressWarnings("unchecked")
+        
         List<Option> opList = new ArrayList<>(options.getOptions());
         if(!opList.isEmpty()){
             builder.append(NEW_LINE).append("options:").append(NEW_LINE);
@@ -481,19 +487,35 @@ public class CliSpecification {
      */
     public Cli parse(String[] args) throws CliValidationException {
 
+    	String[] argsToUse;
+    	String[] actualTrailers;
+    	if(trailers.isEmpty()) {
+    		argsToUse = args;
+    		actualTrailers = new String[0];
+    	}else {
+    		//assume trailers are the last fields
+    		if(args.length < trailers.size()) {
+    			throw new CliValidationException("not enough arguments");
+    		}
+    		argsToUse = Arrays.copyOf(args, args.length - trailers.size());
+    		actualTrailers = Arrays.copyOfRange(args, args.length-trailers.size(), args.length);
+    	}
         CommandLineParser parser = new DefaultParser();
 
         Cli cli;
         try {
-            org.apache.commons.cli.CommandLine cmdline = parser.parse(options, args);
-            cli = new Cli(cmdline);
+            org.apache.commons.cli.CommandLine cmdline = parser.parse(options, argsToUse);
+            cli = new Cli(cmdline, actualTrailers);
         } catch (ParseException e) {
             throw new CliValidationException(e);
         }
 
         internalCliOption.validate(cli);
-
         internalCliOption.fireConsumerIfNeeded(cli);
+        
+        for(int i=0; i< actualTrailers.length; i++) {
+    		trailers.get(i).fireConsumerIfNeeded(actualTrailers[i]);
+    	}
         return cli;
 
     }
