@@ -24,6 +24,11 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 
@@ -68,8 +73,45 @@ public class TestCommandLine {
 
                 .parse(toArgList("-path /usr/local/foo/bar/baz.txt"));
 
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
+    /**
+     * Helper method that is not OS dependent.
+     * @param expectedPath
+     * @param actualFile
+     */
+    private static void assertPathMatches(String expectedPath, File actualFile) {
+    	
+    	if("/".equals(File.separator)) {
+    		assertEquals(new File(expectedPath).getAbsolutePath(), actualFile.getAbsolutePath());
+    	}else {
+    		String p = actualFile.getPath();
+    		String fixed = p.replace(File.separator, "/");
+
+        	
+        	assertEquals(expectedPath, fixed);
+    	}
+    }
+    /**
+     * Helper method that is not OS dependent.
+     * @param expectedPath
+     * @param actualFile
+     */
+    private static void assertPathMatches(String expectedPath, String actualPath) {
+    	
+    	if("/".equals(File.separator)) {
+    		assertEquals(new File(expectedPath).getAbsolutePath(), actualPath);
+    	}else {
+    		String[] parts = FILE_SEP_PATTERN.split(expectedPath);
+    		
+        	Path expected = Path.of(parts[0], Arrays.copyOfRange(parts, 1, parts.length-1)).toAbsolutePath();
+        	
+        	String[] actualParts = FILE_SEP_PATTERN.split(actualPath);
+        	Path actual = Path.of(actualParts[0], Arrays.copyOfRange(actualParts, 1, actualParts.length -1));
+        	assertEquals(expected, actual.toAbsolutePath());
+    	}
+    }
+    private static final Pattern FILE_SEP_PATTERN = Pattern.compile("\\/");
 
     @Test
     public void multipleOptions() throws IOException{
@@ -82,7 +124,7 @@ public class TestCommandLine {
 
                 .parse(toArgList("-path /usr/local/foo/bar/baz.txt"));
 
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
 
         assertTrue(cli.hasOption("path"));
         assertEquals("/usr/local/foo/bar/baz.txt", cli.getOptionValue("path"));
@@ -97,7 +139,7 @@ public class TestCommandLine {
                                 option("a").setToInt(ex::setA))
                 .parse(new URL("http://example.com?path=/usr/local/foo/bar/baz.txt&a=2"));
 
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
         assertEquals(2, ex.getA());
 
     }
@@ -141,7 +183,7 @@ public class TestCommandLine {
 
                 .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt"});
 
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
 
     @Test
@@ -157,7 +199,7 @@ public class TestCommandLine {
                 .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123"});
 
         assertEquals(123, ex.getA());
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
 
     @Test
@@ -172,7 +214,7 @@ public class TestCommandLine {
                 .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123", "-bar", "lah"});
 
         assertEquals(123, ex.getA());
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
 
     @Test(expected = CliValidationException.class)
@@ -204,7 +246,7 @@ public class TestCommandLine {
                 .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123", "-bar", "stool"});
 
         assertEquals(123, ex.getA());
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
 
     @Test
@@ -223,7 +265,7 @@ public class TestCommandLine {
                 .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123", "-bar", "stool"});
 
         assertEquals(123, ex.getA());
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
 
     @Test
@@ -243,7 +285,7 @@ public class TestCommandLine {
                 .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123", "-bar", "stool"});
 
         assertEquals(123, ex.getA());
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
 
     @Test(expected = CliValidationException.class)
@@ -280,7 +322,7 @@ public class TestCommandLine {
                 .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123"});
 
         assertEquals(123, ex.getA());
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
     @Test(expected = CliValidationException.class)
     public void nestedGroupsRequiredRadioGroupInsideGenericGroupNotSelected() throws IOException{
@@ -299,7 +341,7 @@ public class TestCommandLine {
                 .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-foo", "123"});
 
         assertEquals(123, ex.getA());
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
 
 
@@ -312,7 +354,7 @@ public class TestCommandLine {
 
                 .parse(new String[]{"-foo", "x", "-path","/usr/local/foo/bar/baz.txt"});
 
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
 
 
@@ -342,7 +384,7 @@ public class TestCommandLine {
 
                 .parse(new String[]{"-path","/usr/local/foo/bar/baz.txt", "-bar", "stool"});
 
-        assertEquals("/usr/local/foo/bar/baz.txt", ex.getMyFile().getAbsolutePath());
+        assertPathMatches("/usr/local/foo/bar/baz.txt", ex.getMyFile());
     }
 
 

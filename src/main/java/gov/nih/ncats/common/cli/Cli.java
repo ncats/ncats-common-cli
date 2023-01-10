@@ -27,8 +27,10 @@ public class Cli {
 
     private final org.apache.commons.cli.CommandLine delegate;
 
-    Cli(org.apache.commons.cli.CommandLine cmd){
+    private String[] trailers;
+    Cli(org.apache.commons.cli.CommandLine cmd, String[] trailers){
         this.delegate = cmd;
+        this.trailers = trailers;
     }
 
     /**
@@ -47,5 +49,21 @@ public class Cli {
 
     public boolean helpRequested(){
         return delegate.hasOption("h") || delegate.hasOption("help");
+    }
+    /**
+     * Get the ith trailer.
+     * @param i the index into the array of trailers on the command line.
+     * @return the trailer value as a String.
+     * 
+     * @throws IndexOutOfBoundsException if i is less than zero or more than number of trailers.
+     * 
+     * @see #getNumberOfTrailers()
+     */
+    public String getTrailer(int i) {
+    	return trailers[i];
+    }
+    
+    public int getNumberOfTrailers() {
+    	return trailers.length;
     }
 }
