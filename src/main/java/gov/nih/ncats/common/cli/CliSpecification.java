@@ -392,13 +392,13 @@ public class CliSpecification {
 
 
         while(true){
-            text = padding+ text.substring(pos).trim();
+            text = text.substring(pos).trim();
             pos = findWrapPos(text, width, nextLineTabStop);
             if(pos == -1){
-                builder.append(text);
+                builder.append(padding).append(text);
                 return;
             }
-            builder.append(rTrim(text.substring(0, pos))).append(NEW_LINE);
+            builder.append(padding).append(rTrim(text.substring(0, pos))).append(NEW_LINE);
         }
     }
 
